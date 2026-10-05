@@ -93,7 +93,9 @@ recipe/거부 계약 11개·actionlint·shell/Python 검사가 통과했습니�
 
 Provider는 Apache main `2a46b8e43382bbd1564db7a9bfa56f9caa872d13`의 최신 VPC ACL/CIDR·ProxyProtocol/fixed IP 소유권/providerID·zone·region/pagination 변경과 내부 SHA256 SDK를 포함합니다. 내부 이미지 source `34fe8294cd8c2337fbf6934eb75e4684cf3a9d85`, [Origin 검사](https://github.com/dhslove/ablestack-kubernetes-provider/actions/runs/37329464966)가 성공했습니다.
 
-SDK v2.19.1을 내부 module에 병합했고 ISO 후보 SDK tag `v2.19.2-mold-test.1`의 source는 `7f1863866bc605456eb15c52bcde214c9ad9240c`입니다. 후속 문서/test license 보완의 SDK PR head는 `049fcf9`이며 client 구현은 동일합니다. [Origin contract](https://github.com/dhslove/ablestack-mold-go/actions/runs/37320794073) 및 [Upstream RAT 보완 검사](https://github.com/ablecloud-team/ablestack-mold-go/actions/runs/37336051006)가 성공했습니다.
+SDK v2.19.1을 내부 module에 병합했고 ISO 후보 SDK tag `v2.19.2-mold-test.1`의 source는 `7f1863866bc605456eb15c52bcde214c9ad9240c`입니다. 후속 문서/test license 및 CI 대상 보완의 SDK PR head는 `272fbc3`이며 client 구현은 동일합니다. [Origin contract](https://github.com/dhslove/ablestack-mold-go/actions/runs/37320794073) 및 [Upstream RAT 보완 검사](https://github.com/ablecloud-team/ablestack-mold-go/actions/runs/37336051006)가 성공했습니다.
+
+원본 SDK의 [SHA1 simulator CI](https://github.com/ablecloud-team/ablestack-mold-go/actions/runs/37336051011)는 Mold SHA256 요청에 401을 반환하는 프로토콜 불일치가 확인되어 제거했습니다. Mold HTTP 서명 계약/Build Check/RAT와 31번 실제 검증을 유지하며 원본 simulator의 전체 integration을 Mold PASS로 표시하지 않습니다. 연속 integration에는 전용 Mold 시험 환경이 필요합니다.
 
 AutoScaler는 내부 patch `b297d2ed89f67ea66da4dcde67abeade971fea01`을 각 minor의 전체 원본 checkout에 적용합니다. [4개 minor Origin 빌드](https://github.com/dhslove/autoscaler/actions/runs/37329451678)와 [Verify Go](https://github.com/dhslove/autoscaler/actions/runs/37329451460)가 성공했습니다.
 
