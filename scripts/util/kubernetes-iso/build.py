@@ -70,6 +70,12 @@ def check_recipe(recipe):
     if not re.fullmatch(r'[a-z0-9-]+', recipe['profile']):
         raise ValueError('invalid profile')
     required = {'k8s/kubeadm', 'k8s/kubelet', 'k8s/kubectl', 'network.yaml', 'headlamp.yaml', 'provider.yaml', 'autoscaler.yaml', 'cni/cni-plugins-amd64.tgz', 'cri-tools/crictl-linux-amd64.tar.gz', 'etcd/etcd-linux-amd64.tar.gz'}
+    if recipe['features'].get('csi'):
+        required.update({'manifest.yaml', 'snapshot-crds.yaml', 'csi-profile.json'})
+        if recipe['profile'] != 'mold-cks-csi' or 'csi' not in recipe['components']:
+            raise ValueError('CSI payload requires the explicit optional profile and internal component')
+    elif recipe['profile'] == 'mold-cks-csi' or 'csi' in recipe['components']:
+        raise ValueError('basic profile cannot claim CSI component support')
     paths = [safe_path(f['path']) for f in recipe['files']]
     if len(paths) != len(set(paths)) or not required.issubset(paths):
         raise ValueError('duplicate paths or mandatory payload missing')
@@ -87,10 +93,12 @@ def check_recipe(recipe):
             raise ValueError('image digest is required')
     if len(refs) != len(set(refs)):
         raise ValueError('duplicate image')
-    for component in ('provider', 'autoscaler'):
+    for component in ('provider', 'autoscaler') + (('csi',) if recipe['features'].get('csi') else ()):
         c = recipe['components'][component]
         if c['api_signature'] != 'HMAC-SHA256' or c['image'] not in refs or not re.fullmatch('[a-f0-9]{40}', c['source_sha']):
             raise ValueError('unapproved Mold component or missing provenance')
+    if recipe['features'].get('provider_ownership_v1') and 'ownership-v1' not in recipe['components']['provider'].get('features', []):
+        raise ValueError('Provider ownership marker requires verified component support')
     minor='.'.join(recipe['kubernetes_version'].split('.')[:2])
     if recipe['components']['autoscaler'].get('kubernetes_minor','1.34') != minor:
         raise ValueError('Kubernetes/AutoScaler minor mismatch')
@@ -171,10 +179,20 @@ def main():
             download(file, target, args.cache)
             if target.suffix == '.yaml':
                 docs = list(yaml.safe_load_all(target.read_text()))
-                rewrite_images(docs, replacements)
-                target.write_text(yaml.safe_dump_all(docs, sort_keys=False))
+                # CSI profile JSON binds these exact source bytes. Its manifests
+                # already contain locked digests; preserve their checksum contract.
+                if not (recipe['features'].get('csi') and file['path'] in ('manifest.yaml', 'snapshot-crds.yaml')):
+                    rewrite_images(docs, replacements)
+                    target.write_text(yaml.safe_dump_all(docs, sort_keys=False))
             if file['path'] in ('k8s/kubeadm', 'k8s/kubelet', 'k8s/kubectl'):
                 target.chmod(0o755)
+        if recipe['features'].get('provider_ownership_v1'):
+            provider = recipe['components']['provider']
+            provenance = json.loads((payload / 'provenance/provider.json').read_text())
+            if provenance.get('source_sha') != provider['source_sha'] or provenance.get('image') != provider['image'] or 'ownership-v1' not in provenance.get('features', []):
+                raise ValueError('Provider ownership provenance mismatch')
+            marker = {'schemaVersion': 1, 'providerSource': provider['source_sha'], 'providerImage': provider['image'], 'sdkSource': provider['sdk']['source_sha']}
+            (payload / 'provider-ownership-v1.json').write_text(json.dumps(marker, sort_keys=True) + '\n')
         for binary_name in ('kubeadm', 'kubelet', 'kubectl'):
             run(['cosign', 'verify-blob', '--certificate', payload / ('k8s/' + binary_name + '.cert'), '--signature', payload / ('k8s/' + binary_name + '.sig'), '--certificate-identity', 'krel-staging@k8s-releng-prod.iam.gserviceaccount.com', '--certificate-oidc-issuer', 'https://accounts.google.com', payload / ('k8s/' + binary_name)])
         core = run([payload / 'k8s/kubeadm', 'config', 'images', 'list', '--kubernetes-version=v' + version]).splitlines()

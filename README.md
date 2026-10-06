@@ -265,3 +265,19 @@ fork의 작업 브랜치에서 변경하고 검증한 뒤 자신의 `origin`에 
 | 공식 qualification/component gate 실패 | stable 원본·공식 컴포넌트·실환경 PASS·공식 main 병합 조건 충족 후 재빌드 |
 
 구현 계약은 [상세 문서](scripts/util/kubernetes-iso/README.ko.md), 설계는 [ISO 이슈 #1228](https://github.com/ablecloud-team/ablestack-cloud/issues/1228) 및 [생명주기 Epic #1227](https://github.com/ablecloud-team/ablestack-cloud/issues/1227)을 참고합니다. 특정 시험 저장소·시험 Release·31번 환경의 검증 이력은 [별도 검증 보고서](docs/validation/iso-registration-20261006.md)에 보관합니다. Provider runtime 결과는 [실행 보고서](docs/validation/runtime-provider-20261006.md), 발견한 워커 복구 준비 절차는 [유지보수 검증 문서](docs/validation/worker-maintenance-20261006.md)를 참고합니다.
+
+## 선택형 CSI ISO 프로파일
+
+기본 `mold-cks` 프로파일과 GFS2 Primary/KVM 시험용 `mold-cks-csi` 프로파일을 각각 빌드합니다. Actions의 `profile` 입력으로 선택하며, Origin 변경 검증은 지원 버전 6개와 두 프로파일의 조합으로 진행합니다. CSI 프로파일은 SHA256 내부 드라이버·sidecar 이미지 8개·snapshot CRD·프로파일 체크섬을 함께 포함합니다. 기본 ISO의 CSI 활성화 여부는 바뀌지 않습니다.
+
+Upstream을 clone하거나 fork한 저장소에서는 아래 recipe를 사용해 CSI ISO를 빌드할 수 있습니다. `--revision`과 source SHA가 산출물 식별자에 포함되므로 이미 등록한 ISO를 덮어쓰지 않습니다.
+
+```bash
+scripts/util/create-kubernetes-binaries-iso.sh \
+  --recipe scripts/util/kubernetes-iso/recipes/kubernetes-1.34.12-mold-cks-csi-amd64.json \
+  --output /home/ablecloud/work/iso-output --revision r1
+```
+
+새 Provider의 `ownership-v1` 기능은 ISO에 포함된 component provenance와 이미지/source 검증을 통과한 경우에만 표시됩니다. Mold backend에는 public IP `allocationgeneration`과 조건부 IP 반환 기능이 필요합니다. 구버전 ISO의 장기 시험 클러스터는 재등록·업그레이드하지 않고, 새 ISO는 별도 클러스터에서 시험합니다.
+
+CSI 프로파일의 ISO 파일 검증과 실제 스토리지 검증은 각각 수행합니다. 해당 Kubernetes minor에서 생성·attach·확장·이동·snapshot/restore·Retain/Delete·실패 후 재시도를 통과하고 이슈 증거를 기록하기 전에는 공식 Release의 CSI qualification을 PASS로 올릴 수 없습니다. StorageClass에는 대상 Mold GFS2 Primary에 연결된 disk offering을 지정해야 합니다. 1.37 AutoScaler의 DEV baseline 제한과 Upstream 공식 Release 게이트도 계속 적용됩니다.

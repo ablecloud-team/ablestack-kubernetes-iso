@@ -17,7 +17,7 @@ on:
   push:
     branches: [codex/kubernetes-iso-1228]
     paths: ['scripts/util/kubernetes-iso/**', 'scripts/util/create-kubernetes-binaries-iso.sh', '.github/workflows/kubernetes-iso.yml']
-    tags: ['k8s-v*-mold-cks-amd64-r*']
+    tags: ['k8s-v*-mold-cks*-amd64-r*']
   pull_request:
     paths: ['scripts/util/kubernetes-iso/**', 'scripts/util/create-kubernetes-binaries-iso.sh', '.github/workflows/kubernetes-iso.yml']
   workflow_dispatch:
@@ -27,6 +27,11 @@ on:
         required: true
         type: choice
         options: ['1.34.2', '1.34.9', '1.34.12', '1.35.9', '1.36.5', '1.37.1']
+      profile:
+        description: Basic lifecycle payload or opt-in Mold GFS2 KVM CSI payload
+        type: choice
+        options: ['mold-cks', 'mold-cks-csi']
+        default: mold-cks
       revision:
         description: Immutable artifact revision (r1, r2, ...)
         type: string
@@ -51,6 +56,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ['1.34.2', '1.34.9', '1.34.12', '1.35.9', '1.36.5', '1.37.1']
+        profile: ['mold-cks', 'mold-cks-csi']
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -70,20 +76,25 @@ jobs:
       - name: Recipe and rejection tests
         run: python3 -m unittest discover -s scripts/util/kubernetes-iso/tests -v
       - name: Build and independently validate ISO
-        if: (github.event_name != 'workflow_dispatch' || inputs.version == matrix.version) && (!startsWith(github.ref, 'refs/tags/') || startsWith(github.ref_name, format('k8s-v{0}-', matrix.version)))
+        if: (github.event_name != 'workflow_dispatch' || (inputs.version == matrix.version && inputs.profile == matrix.profile)) && (!startsWith(github.ref, 'refs/tags/') || startsWith(github.ref_name, format('k8s-v{0}-{1}-amd64-', matrix.version, matrix.profile)))
         env:
           VERSION: ${{ matrix.version }}
+          PROFILE: ${{ matrix.profile }}
           REVISION: ${{ inputs.revision || 'r1' }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            REVISION=$(echo "$GITHUB_REF_NAME" | sed -nE 's/^k8s-v[0-9.]+-mold-cks-amd64-(r[0-9]+)-[a-f0-9]{8}$/\1/p')
+            REVISION=$(echo "$GITHUB_REF_NAME" | sed -nE "s/^k8s-v[0-9.]+-${PROFILE}-amd64-(r[0-9]+)-[a-f0-9]{8}$/\1/p")
             [ -n "$REVISION" ] || exit 1
           fi
-          scripts/util/create-kubernetes-binaries-iso.sh --recipe "scripts/util/kubernetes-iso/recipes/kubernetes-$VERSION-amd64.json" --output "$RUNNER_TEMP/iso-output" --revision "$REVISION"
+          RECIPE="scripts/util/kubernetes-iso/recipes/kubernetes-$VERSION-amd64.json"
+          if [ "$PROFILE" = mold-cks-csi ]; then
+            RECIPE="scripts/util/kubernetes-iso/recipes/kubernetes-$VERSION-mold-cks-csi-amd64.json"
+          fi
+          scripts/util/create-kubernetes-binaries-iso.sh --recipe "$RECIPE" --output "$RUNNER_TEMP/iso-output" --revision "$REVISION"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: success() && (github.event_name != 'workflow_dispatch' || inputs.version == matrix.version) && (!startsWith(github.ref, 'refs/tags/') || startsWith(github.ref_name, format('k8s-v{0}-', matrix.version)))
+        if: success() && (github.event_name != 'workflow_dispatch' || (inputs.version == matrix.version && inputs.profile == matrix.profile)) && (!startsWith(github.ref, 'refs/tags/') || startsWith(github.ref_name, format('k8s-v{0}-{1}-amd64-', matrix.version, matrix.profile)))
         with:
-          name: kubernetes-${{ matrix.version }}-amd64
+          name: kubernetes-${{ matrix.version }}-${{ matrix.profile }}-amd64
           path: ${{ runner.temp }}/iso-output/
           compression-level: 0
           retention-days: 7
@@ -98,22 +109,23 @@ jobs:
       fail-fast: false
       matrix:
         version: ['1.34.2', '1.34.9', '1.34.12', '1.35.9', '1.36.5', '1.37.1']
+        profile: ['mold-cks', 'mold-cks-csi']
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 1
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        if: (github.event_name != 'workflow_dispatch' || inputs.version == matrix.version) && (!startsWith(github.ref, 'refs/tags/') || startsWith(github.ref_name, format('k8s-v{0}-', matrix.version)))
+        if: (github.event_name != 'workflow_dispatch' || (inputs.version == matrix.version && inputs.profile == matrix.profile)) && (!startsWith(github.ref, 'refs/tags/') || startsWith(github.ref_name, format('k8s-v{0}-{1}-amd64-', matrix.version, matrix.profile)))
         with:
-          name: kubernetes-${{ matrix.version }}-amd64
+          name: kubernetes-${{ matrix.version }}-${{ matrix.profile }}-amd64
           path: ${{ runner.temp }}/iso-output/
       - name: Publish immutable Origin trial
-        if: github.repository == 'dhslove/ablestack-kubernetes-iso' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish)) && (github.event_name != 'workflow_dispatch' || inputs.version == matrix.version)
+        if: github.repository == 'dhslove/ablestack-kubernetes-iso' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish)) && (github.event_name != 'workflow_dispatch' || (inputs.version == matrix.version && inputs.profile == matrix.profile))
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/util/kubernetes-iso/publish.py --directory "$RUNNER_TEMP/iso-output" --repository dhslove/ablestack-kubernetes-iso --mode origin-trial
       - name: Publish official tag after Europa merge
-        if: github.repository == 'ablecloud-team/ablestack-kubernetes-iso' && startsWith(github.ref_name, format('k8s-v{0}-', matrix.version))
+        if: github.repository == 'ablecloud-team/ablestack-kubernetes-iso' && startsWith(github.ref_name, format('k8s-v{0}-{1}-amd64-', matrix.version, matrix.profile))
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ matrix.version }}

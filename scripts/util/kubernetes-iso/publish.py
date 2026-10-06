@@ -48,6 +48,7 @@ def main():
   manifest=json.loads((args.directory/(name+'.manifest.json')).read_text())
   qualification=manifest['features'].get('runtime_qualification',{})
   if qualification.get('status')!='PASS' or not qualification.get('evidence_urls'):raise ValueError('official Release requires documented Provider/AutoScaler and node lifecycle runtime qualification')
+  if manifest['features'].get('csi') and (manifest['features'].get('csi_qualification',{}).get('status') != 'PASS' or not manifest['features'].get('csi_qualification',{}).get('evidence_urls')):raise ValueError('official CSI Release requires minor-specific storage runtime qualification')
   if manifest['components']['autoscaler'].get('baseline_status') != 'stable':raise ValueError('official Release requires a stable minor-matched AutoScaler baseline')
   for component in manifest['components'].values():
    if not component['source_repository'].startswith('ablecloud-team/') or 'candidate_module' in component.get('sdk',{}):raise ValueError('official Release requires promoted Upstream component sources and SDK')
@@ -74,7 +75,7 @@ def main():
 - Mold URL 등록 주소: {url}
 - Mold checksum: `{registration['checksum']}`
 - GitHub asset URL의 HTTP 302 다운로드에는 Mold의 `store.download.follow.redirects=true`가 다운로드 중 필요합니다. 기존 값을 기록하고 다운로드 완료 후 운영 정책에 맞게 복원합니다.
-- CSI는 내부 SHA256 호환성 검증 전이므로 이 profile에 포함하지 않습니다.
+- CSI: {'내부 SHA256 GFS2 KVM opt-in 프로파일; 고정 이미지 8개 포함, 해당 minor 런타임 시험 별도' if manifest['features'].get('csi') else '기본 프로파일에는 포함하지 않음'}.
 - 클러스터 생성/확장/업그레이드 및 LB/VPC 런타임 검증은 별도 생명주기 검증 범위입니다.
 ''')
  files=sorted(x for x in args.directory.iterdir() if x.is_file() and x.name.startswith(name))

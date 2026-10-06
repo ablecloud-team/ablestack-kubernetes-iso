@@ -133,6 +133,20 @@ def validate_payload(root, recipe, recipe_hash):
             require(listed[file['path']] == file['sha256'], 'locked source checksum mismatch: '+file['path'])
     required = {x['path'] for x in recipe['files']} | {'kubelet.service','10-kubeadm.conf','manifest.json','sbom.cdx.json','SHA256SUMS','docker/images.list'}
     require(required.issubset(actual_files) and all((root/x).stat().st_size>0 for x in required),'mandatory consumer payload missing or empty')
+    require(manifest['features'] == recipe['features'], 'feature provenance mismatch')
+    if recipe['features'].get('provider_ownership_v1'):
+        provider = recipe['components']['provider']
+        provenance = json.loads((root/'provenance/provider.json').read_text())
+        require('ownership-v1' in provenance.get('features', []) and provenance.get('source_sha') == provider['source_sha'] and provenance.get('image') == provider['image'], 'unverified Provider ownership support')
+        marker = json.loads((root/'provider-ownership-v1.json').read_text())
+        require(marker == {'schemaVersion': 1, 'providerSource': provider['source_sha'], 'providerImage': provider['image'], 'sdkSource': provider['sdk']['source_sha']}, 'Provider ownership marker mismatch')
+    if recipe['features'].get('csi'):
+        csi_profile = json.loads((root/'csi-profile.json').read_text())
+        component = recipe['components']['csi']
+        require(csi_profile.get('apiSignature') == 'HmacSHA256' and csi_profile.get('driverImage') == component['image'] and csi_profile.get('binarySource') == component['source_sha'], 'CSI profile source/signature mismatch')
+        for name in ('manifest.yaml', 'snapshot-crds.yaml'):
+            require(csi_profile.get('files', {}).get(name) == hash_file(root/name), 'CSI consumer profile checksum mismatch: '+name)
+        require(set(csi_profile.get('images', {}).values()).issubset({x['reference'] for x in recipe['images']}) and len(csi_profile.get('images', {})) == 8, 'CSI image lock incomplete')
     version='v'+recipe['kubernetes_version']
     versions={}
     for name,args in [('kubeadm',['version','-o','short']),('kubelet',['--version']),('kubectl',['version','--client=true','-o','json'])]:
@@ -156,7 +170,7 @@ def validate_payload(root, recipe, recipe_hash):
                     if data.startswith(b'\x7fELF'): elf_amd64(data,member.name); found+=1
             require(found>0,'archive has no binaries: '+path)
     refs=set()
-    for name in ['network.yaml','headlamp.yaml','provider.yaml','autoscaler.yaml']:
+    for name in ['network.yaml','headlamp.yaml','provider.yaml','autoscaler.yaml'] + (['manifest.yaml', 'snapshot-crds.yaml'] if recipe['features'].get('csi') else []):
         docs=list(yaml.safe_load_all((root/name).read_text()))
         require(all(isinstance(x,dict) and x.get('apiVersion') and x.get('kind') for x in docs if x is not None),'invalid Kubernetes YAML: '+name)
         if name == 'autoscaler.yaml':
@@ -214,7 +228,12 @@ def validate_payload(root, recipe, recipe_hash):
                 with tempfile.TemporaryDirectory(prefix='mold-binary-') as binary_dir:
                     binary_path=Path(binary_dir)/component['binary'];binary_path.write_bytes(binary_data)
                     modules=subprocess.check_output(['go','version','-m',str(binary_path)],text=True)
-                    require('vcs.revision='+component.get('binary_source_sha',component['source_sha']) in modules,'component binary source SHA mismatch')
+                    if component.get('binary_source_provenance') == 'go-linker-buildinfo':
+                        require(component['binary'] == 'cloudstack-csi-driver', 'unsupported component source attestation')
+                        flag='github.com/ablecloud-team/ablestack-kubernetes-csi/pkg/driver.gitCommit='+component['source_sha']
+                        require(re.search(re.escape(flag)+r'(?=\s|"|$)', modules) is not None, 'CSI binary source SHA mismatch')
+                    else:
+                        require('vcs.revision='+component.get('binary_source_sha',component['source_sha']) in modules,'component binary source SHA mismatch')
                     if 'sdk' in component:
                         sdk=component['sdk']
                         require(sdk['module'] in modules and sdk['version'] in modules, 'Provider binary SDK provenance mismatch')

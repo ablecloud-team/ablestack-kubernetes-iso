@@ -29,6 +29,20 @@ class RecipeGates(unittest.TestCase):
  def setUp(self):self.recipe=json.loads((HERE/'recipes/kubernetes-1.34.2-amd64.json').read_text())
  def test_supported_catalog(self):
   for path in (HERE/'recipes').glob('*.json'):build.check_recipe(json.loads(path.read_text()))
+ def test_unverified_provider_ownership_support_is_rejected(self):
+  self.recipe['components']['provider']['features']=[]
+  with self.assertRaisesRegex(ValueError,'ownership'):build.check_recipe(self.recipe)
+ def test_basic_profile_cannot_claim_csi_support(self):
+  self.recipe['components']['csi']=dict(self.recipe['components']['provider'])
+  with self.assertRaisesRegex(ValueError,'basic profile'):build.check_recipe(self.recipe)
+ def test_csi_requires_complete_manifest_payload(self):
+  r=json.loads((HERE/'recipes/kubernetes-1.34.2-mold-cks-csi-amd64.json').read_text())
+  r['files']=[f for f in r['files'] if f['path']!='csi-profile.json']
+  with self.assertRaisesRegex(ValueError,'mandatory'):build.check_recipe(r)
+ def test_csi_rejects_unapproved_sha1_driver(self):
+  r=json.loads((HERE/'recipes/kubernetes-1.34.2-mold-cks-csi-amd64.json').read_text())
+  r['components']['csi']['api_signature']='HMAC-SHA1'
+  with self.assertRaisesRegex(ValueError,'unapproved'):build.check_recipe(r)
  def test_cross_minor_autoscaler_is_rejected(self):
   self.recipe['kubernetes_version']='1.35.2'
   with self.assertRaisesRegex(ValueError,'minor'):build.check_recipe(self.recipe)
