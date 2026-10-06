@@ -98,4 +98,17 @@ class AutoScalerRbacGates(unittest.TestCase):
   self.documents[2]['rules'][0]['verbs'].append('delete')
   with self.assertRaisesRegex(ValueError,'read-only'):validate.validate_autoscaler_rbac(self.documents)
 
+class AutoScalerIdentityGates(unittest.TestCase):
+ def setUp(self):
+  self.component=json.loads((HERE/'recipes/kubernetes-1.34.2-amd64.json').read_text())['components']['autoscaler']
+  self.labels={'io.ablestack.mold-client-sha256':self.component['customization_files']['client.go'], 'io.ablestack.mold-worker-identity-sha256':self.component['customization_files']['mold_worker_identity.go']}
+ def test_worker_identity_label_is_accepted(self):validate.validate_autoscaler_customizations(self.component,self.labels)
+ def test_missing_or_changed_worker_identity_label_is_rejected(self):
+  for value in [None,'0'*64]:
+   with self.subTest(value=value),self.assertRaisesRegex(ValueError,'worker identity'):
+    self.labels['io.ablestack.mold-worker-identity-sha256']=value;validate.validate_autoscaler_customizations(self.component,self.labels)
+ def test_recipe_without_worker_identity_provenance_is_rejected(self):
+  r=json.loads((HERE/'recipes/kubernetes-1.34.2-amd64.json').read_text());del r['components']['autoscaler']['customization_files']['mold_worker_identity.go']
+  with self.assertRaisesRegex(ValueError,'worker identity'):build.check_recipe(r)
+
 if __name__=='__main__':unittest.main()

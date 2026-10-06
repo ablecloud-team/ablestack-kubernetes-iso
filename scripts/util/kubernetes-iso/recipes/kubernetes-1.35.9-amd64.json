@@ -108,19 +108,19 @@
     },
     {
       "path": "autoscaler.yaml",
-      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/18d64e9b430716fe524d568101b6845bf44a5265/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
+      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/254f91edfaa8b25d0cc41fd1f07be092372a7444/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
       "sha256": "47fe594518fbf79d3991a72c258228e0ea3716534e3461d56dce18e7238d8f89",
       "version": null
     },
     {
       "path": "provenance/autoscaler.json",
-      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-b297d2ed89f6-k8s1.35/provenance.json",
-      "sha256": "ecd6803a9aad21f250a1613328ed7bcc5ef2ea9bab2aaa172a4c7a0fb5cb3f0e",
+      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-254f91edfaa8-k8s1.35/provenance.json",
+      "sha256": "461db12595ee24b05251ac459c124b0a598efa96c97221d55999853c4b4c44c7",
       "version": null
     },
     {
       "path": "provenance/autoscaler-go-modules.txt",
-      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-b297d2ed89f6-k8s1.35/go-modules.txt",
+      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-254f91edfaa8-k8s1.35/go-modules.txt",
       "sha256": "858be14b6afd15ff8f1ecbe90017d8199ff596a9135300eaa4ea919c30c82e58",
       "version": null
     }
@@ -200,9 +200,9 @@
     },
     {
       "original": "ghcr.io/ablecloud-team/autoscaler:1.34.5-mold.1",
-      "resolved_from": "ghcr.io/dhslove/autoscaler:sha-b297d2ed89f67ea66da4dcde67abeade971fea01-k8s1.35",
-      "reference": "ghcr.io/dhslove/autoscaler@sha256:0962f8a20697d6d9bdcd03a896c54fff4524d44fe8eb2ca962d289576d6bf1d5",
-      "import_alias": "ghcr.io/dhslove/autoscaler:sha-b297d2ed89f67ea66da4dcde67abeade971fea01-k8s1.35"
+      "resolved_from": "ghcr.io/dhslove/autoscaler:sha-254f91edfaa8b25d0cc41fd1f07be092372a7444-k8s1.35",
+      "reference": "ghcr.io/dhslove/autoscaler@sha256:76fa405a37521a3da5583b25fbd6a7c033bbf222db012dad0a5f2664091125b3",
+      "import_alias": "ghcr.io/dhslove/autoscaler:sha-254f91edfaa8b25d0cc41fd1f07be092372a7444-k8s1.35"
     }
   ],
   "core_images": [
@@ -236,8 +236,8 @@
     },
     "autoscaler": {
       "source_repository": "dhslove/autoscaler",
-      "source_sha": "b297d2ed89f67ea66da4dcde67abeade971fea01",
-      "build_run": "https://github.com/dhslove/autoscaler/actions/runs/37329451678",
+      "source_sha": "254f91edfaa8b25d0cc41fd1f07be092372a7444",
+      "build_run": "https://github.com/dhslove/autoscaler/actions/runs/37399835426",
       "original_baseline": "cluster-autoscaler-1.35.2",
       "binary_source_sha": "2d42588803c71fe9b35dcd9e3669ac6bb550ca22",
       "baseline_status": "stable",
@@ -247,11 +247,16 @@
       "customization_files": {
         "client.go": "87b2843cafee1707cd84a62d232c1b28fae7448ebb987506ee2811f6050e163a",
         "mold_signing_test.go": "9415df730560eb25906a1e005ced77874264b6e3a5007381421df8bd1b5f2036",
-        "testdata/mold-signing.json": "622bd67d3ded3acc3151586d8c960b3f406a95515c23984c6ff03a9df99f97aa"
+        "testdata/mold-signing.json": "622bd67d3ded3acc3151586d8c960b3f406a95515c23984c6ff03a9df99f97aa",
+        "cks.go": "747b9521acc863a97894a35d6fc0a56dd02b1b4ca4f0c9aa91f75615f9ddcc1e",
+        "mold_worker_identity.go": "eadc73316051cd70c921dbacdc917e5826ccf356c826c8e237ccff8e24be3d34",
+        "mold_worker_identity_test.go": "3387f00d9aedb01758943bb67a1e6e8965e849c60cd983b46427c9329c2e47c8",
+        "mold/apply-worker-identity.py": "5cd74a1089977ab91d8ecf13b6a214fffc52f60bf09d533b37d0791237ba5904",
+        "mold/worker-identity-provider-test.go.tmpl": "97a44610d166508b3b3fd8c66bb8518eeea29728c37b266c091343ba084efe4b"
       },
-      "image": "ghcr.io/dhslove/autoscaler@sha256:0962f8a20697d6d9bdcd03a896c54fff4524d44fe8eb2ca962d289576d6bf1d5",
+      "image": "ghcr.io/dhslove/autoscaler@sha256:76fa405a37521a3da5583b25fbd6a7c033bbf222db012dad0a5f2664091125b3",
       "binary": "cluster-autoscaler",
-      "manifest_sha": "18d64e9b430716fe524d568101b6845bf44a5265",
+      "manifest_sha": "254f91edfaa8b25d0cc41fd1f07be092372a7444",
       "manifest_path": "cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml"
     }
   },

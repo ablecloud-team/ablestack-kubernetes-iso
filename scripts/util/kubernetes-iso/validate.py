@@ -93,6 +93,12 @@ def validate_autoscaler_rbac(documents):
     return {'service_account': namespace + '/' + account, 'storage_informers': list(resources)}
 
 
+def validate_autoscaler_customizations(component, labels):
+    files = component.get('customization_files', {})
+    require(labels.get('io.ablestack.mold-client-sha256') == files.get('client.go'), 'AutoScaler customization provenance mismatch')
+    require(files.get('mold_worker_identity.go') and labels.get('io.ablestack.mold-worker-identity-sha256') == files['mold_worker_identity.go'], 'AutoScaler worker identity provenance mismatch')
+
+
 def validate_payload(root, recipe, recipe_hash):
     manifest = json.loads((root/'manifest.json').read_text())
     require(manifest['recipe_sha256'] == recipe_hash, 'recipe provenance mismatch')
@@ -193,7 +199,7 @@ def validate_payload(root, recipe, recipe_hash):
                 require(binary_data is not None, 'Mold component binary missing')
                 elf_amd64(binary_data[:64],component['binary'])
                 if 'customization_files' in component:
-                    require(config.get('config',{}).get('Labels',{}).get('io.ablestack.mold-client-sha256') == component['customization_files']['client.go'], 'AutoScaler customization provenance mismatch')
+                    validate_autoscaler_customizations(component, labels)
                 with tempfile.TemporaryDirectory(prefix='mold-binary-') as binary_dir:
                     binary_path=Path(binary_dir)/component['binary'];binary_path.write_bytes(binary_data)
                     modules=subprocess.check_output(['go','version','-m',str(binary_path)],text=True)

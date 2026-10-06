@@ -94,6 +94,9 @@ def check_recipe(recipe):
     minor='.'.join(recipe['kubernetes_version'].split('.')[:2])
     if recipe['components']['autoscaler'].get('kubernetes_minor','1.34') != minor:
         raise ValueError('Kubernetes/AutoScaler minor mismatch')
+    identity = recipe['components']['autoscaler'].get('customization_files', {}).get('mold_worker_identity.go', '')
+    if not re.fullmatch('[a-f0-9]{64}', identity):
+        raise ValueError('AutoScaler worker identity customization provenance is required')
     sdk = recipe['components']['provider']['sdk']
     if not sdk['version'] or not re.fullmatch('[a-f0-9]{40}', sdk['source_sha']):
         raise ValueError('Provider SDK provenance is required')
