@@ -62,6 +62,37 @@ def manifest_images(node):
     return result
 
 
+def validate_autoscaler_rbac(documents):
+    """Check the identity and read-only storage informer access of the payload."""
+    documents = [d for d in documents if isinstance(d, dict)]
+    deployment = next((d for d in documents if d.get('kind') == 'Deployment'
+                       and d.get('metadata', {}).get('name') == 'cluster-autoscaler'), None)
+    require(deployment is not None, 'AutoScaler deployment missing')
+    namespace = deployment['metadata'].get('namespace', 'default')
+    account = deployment['spec']['template']['spec'].get('serviceAccountName', 'default')
+    require(any(d.get('kind') == 'ServiceAccount' and d['metadata'].get('name') == account
+                and d['metadata'].get('namespace', 'default') == namespace for d in documents),
+            'AutoScaler ServiceAccount missing')
+    bound_roles = {d['roleRef']['name'] for d in documents if d.get('kind') == 'ClusterRoleBinding'
+                   and d.get('roleRef', {}).get('kind') == 'ClusterRole'
+                   and d['roleRef'].get('apiGroup') == 'rbac.authorization.k8s.io'
+                   and any(s.get('kind') == 'ServiceAccount' and s.get('name') == account
+                           and s.get('namespace') == namespace for s in d.get('subjects', []))}
+    rules = [r for d in documents if d.get('kind') == 'ClusterRole'
+             and d.get('metadata', {}).get('name') in bound_roles for r in d.get('rules', [])]
+    require(rules, 'AutoScaler ClusterRoleBinding missing or mismatched')
+    resources = ('storageclasses', 'csinodes', 'csidrivers', 'csistoragecapacities', 'volumeattachments')
+    for resource in resources:
+        matching = [r for r in rules if 'storage.k8s.io' in r.get('apiGroups', [])
+                    and resource in r.get('resources', []) and not r.get('resourceNames')]
+        verbs = {v for r in matching for v in r.get('verbs', [])}
+        require({'get', 'list', 'watch'}.issubset(verbs),
+                'AutoScaler storage informer get/list/watch missing: ' + resource)
+        if resource == 'volumeattachments':
+            require(verbs == {'get', 'list', 'watch'}, 'AutoScaler VolumeAttachment access must be read-only')
+    return {'service_account': namespace + '/' + account, 'storage_informers': list(resources)}
+
+
 def validate_payload(root, recipe, recipe_hash):
     manifest = json.loads((root/'manifest.json').read_text())
     require(manifest['recipe_sha256'] == recipe_hash, 'recipe provenance mismatch')
@@ -111,6 +142,8 @@ def validate_payload(root, recipe, recipe_hash):
     for name in ['network.yaml','headlamp.yaml','provider.yaml','autoscaler.yaml']:
         docs=list(yaml.safe_load_all((root/name).read_text()))
         require(all(isinstance(x,dict) and x.get('apiVersion') and x.get('kind') for x in docs if x is not None),'invalid Kubernetes YAML: '+name)
+        if name == 'autoscaler.yaml':
+            validate_autoscaler_rbac(docs)
         refs.update(manifest_images(docs))
     expected={x['reference'] for x in recipe['images']}
     require(refs.issubset(expected), 'manifest image missing from lock')

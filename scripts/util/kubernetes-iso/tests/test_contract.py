@@ -70,4 +70,32 @@ class IndependentReaderGates(unittest.TestCase):
  def test_mutable_runtime_image_is_rejected(self):
   with self.assertRaisesRegex(ValueError,'mutable'):validate.manifest_images({'image':'apache/ccm:latest','imagePullPolicy':'IfNotPresent'})
 
+class AutoScalerRbacGates(unittest.TestCase):
+ def setUp(self):
+  self.documents = [
+   {'kind':'ServiceAccount','metadata':{'name':'cluster-autoscaler','namespace':'kube-system'}},
+   {'kind':'Deployment','metadata':{'name':'cluster-autoscaler','namespace':'kube-system'},
+    'spec':{'template':{'spec':{'serviceAccountName':'cluster-autoscaler'}}}},
+   {'kind':'ClusterRole','metadata':{'name':'cluster-autoscaler'},'rules':[
+    {'apiGroups':['storage.k8s.io'],'resources':['storageclasses','csinodes','csidrivers','csistoragecapacities','volumeattachments'],
+     'verbs':['get','list','watch']}]},
+   {'kind':'ClusterRoleBinding','roleRef':{'apiGroup':'rbac.authorization.k8s.io','kind':'ClusterRole','name':'cluster-autoscaler'},
+    'subjects':[{'kind':'ServiceAccount','name':'cluster-autoscaler','namespace':'kube-system'}]}]
+ def test_storage_informer_reads_are_accepted(self):
+  report=validate.validate_autoscaler_rbac(self.documents)
+  self.assertIn('volumeattachments',report['storage_informers'])
+ def test_missing_volumeattachment_is_rejected(self):
+  self.documents[2]['rules'][0]['resources'].remove('volumeattachments')
+  with self.assertRaisesRegex(ValueError,'volumeattachments'):validate.validate_autoscaler_rbac(self.documents)
+ def test_each_missing_read_verb_is_rejected(self):
+  for verb in ['get','list','watch']:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'][0]['verbs'].remove(verb)
+   with self.subTest(verb=verb),self.assertRaisesRegex(ValueError,'get/list/watch'):validate.validate_autoscaler_rbac(documents)
+ def test_wrong_service_account_binding_is_rejected(self):
+  self.documents[3]['subjects'][0]['namespace']='other-namespace'
+  with self.assertRaisesRegex(ValueError,'ClusterRoleBinding'):validate.validate_autoscaler_rbac(self.documents)
+ def test_volumeattachment_write_is_rejected(self):
+  self.documents[2]['rules'][0]['verbs'].append('delete')
+  with self.assertRaisesRegex(ValueError,'read-only'):validate.validate_autoscaler_rbac(self.documents)
+
 if __name__=='__main__':unittest.main()

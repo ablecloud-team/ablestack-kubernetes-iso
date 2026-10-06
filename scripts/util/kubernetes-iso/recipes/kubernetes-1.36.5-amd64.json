@@ -108,8 +108,8 @@
     },
     {
       "path": "autoscaler.yaml",
-      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/b297d2ed89f67ea66da4dcde67abeade971fea01/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
-      "sha256": "21bb3d911db59e0b9ee720524a897de2df0b95fe479445055c8b4816faf3bbb1",
+      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/18d64e9b430716fe524d568101b6845bf44a5265/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
+      "sha256": "47fe594518fbf79d3991a72c258228e0ea3716534e3461d56dce18e7238d8f89",
       "version": null
     },
     {
@@ -251,7 +251,7 @@
       },
       "image": "ghcr.io/dhslove/autoscaler@sha256:62aaadef7dfffd9302e24b0d06d4edf509114018d8855c72b5fc221737797629",
       "binary": "cluster-autoscaler",
-      "manifest_sha": "b297d2ed89f67ea66da4dcde67abeade971fea01",
+      "manifest_sha": "18d64e9b430716fe524d568101b6845bf44a5265",
       "manifest_path": "cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml"
     }
   },
