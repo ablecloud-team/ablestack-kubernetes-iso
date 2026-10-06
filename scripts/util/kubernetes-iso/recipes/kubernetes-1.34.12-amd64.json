@@ -90,19 +90,19 @@
     },
     {
       "path": "provenance/provider.json",
-      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-34fe8294cd8c/provenance.json",
-      "sha256": "d317b06fecefc10df43773343cd55caa2715bb8743e5d8b5c944349934d369e5",
+      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-db79dec21bf7/provenance.json",
+      "sha256": "48119ae5b4126f5e564e39cdc20bf108b6d713de14da7c439227c46c5db2bec5",
       "version": null
     },
     {
       "path": "provenance/provider-go-modules.txt",
-      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-34fe8294cd8c/go-modules.txt",
-      "sha256": "a97f1bf76552d1537b0e194d64d4538a50a90c1ee16fb8222d5bac889e343423",
+      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-db79dec21bf7/go-modules.txt",
+      "sha256": "4bb6b96faf07f89aad563451f636d4208ab98aadb5658a2db6108358557dcda2",
       "version": null
     },
     {
       "path": "provider.yaml",
-      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-provider/34fe8294cd8c2337fbf6934eb75e4684cf3a9d85/deployment.yaml",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-provider/db79dec21bf76cc0f5082dfccbaf4e23376b75d3/deployment.yaml",
       "sha256": "9bd7bb792e02cd3313ddba90346db9855ba45dc22255d3d63335dcb366a1f5a4",
       "version": null
     },
@@ -194,9 +194,9 @@
     },
     {
       "original": "ghcr.io/ablecloud-team/ablestack-kubernetes-provider:1.2.1-mold.1",
-      "resolved_from": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-34fe8294cd8c2337fbf6934eb75e4684cf3a9d85",
-      "reference": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:b7195d0c597db7b17e6e506b974ba3c61a28741ea8e3be0cc916e7fa55b84e0c",
-      "import_alias": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-34fe8294cd8c2337fbf6934eb75e4684cf3a9d85"
+      "resolved_from": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-db79dec21bf76cc0f5082dfccbaf4e23376b75d3",
+      "reference": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:e37041d0668e3448c9ac0c4de733e7352364e586a86368b6a08a351b94ed695a",
+      "import_alias": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-db79dec21bf76cc0f5082dfccbaf4e23376b75d3"
     },
     {
       "original": "ghcr.io/ablecloud-team/autoscaler:1.34.5-mold.1",
@@ -217,14 +217,14 @@
   "components": {
     "provider": {
       "source_repository": "dhslove/ablestack-kubernetes-provider",
-      "source_sha": "34fe8294cd8c2337fbf6934eb75e4684cf3a9d85",
-      "build_run": "https://github.com/dhslove/ablestack-kubernetes-provider/actions/runs/37329464966",
+      "source_sha": "db79dec21bf76cc0f5082dfccbaf4e23376b75d3",
+      "build_run": "https://github.com/dhslove/ablestack-kubernetes-provider/actions/runs/37421566543",
       "original_baseline": "Apache Provider main 2a46b8e43382bbd1564db7a9bfa56f9caa872d13",
       "architecture": "amd64",
       "api_signature": "HMAC-SHA256",
-      "image": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:b7195d0c597db7b17e6e506b974ba3c61a28741ea8e3be0cc916e7fa55b84e0c",
+      "image": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:e37041d0668e3448c9ac0c4de733e7352364e586a86368b6a08a351b94ed695a",
       "binary": "cloudstack-ccm",
-      "manifest_sha": "34fe8294cd8c2337fbf6934eb75e4684cf3a9d85",
+      "manifest_sha": "db79dec21bf76cc0f5082dfccbaf4e23376b75d3",
       "manifest_path": "deployment.yaml",
       "sdk": {
         "module": "github.com/ablecloud-team/ablestack-mold-go/v2",
