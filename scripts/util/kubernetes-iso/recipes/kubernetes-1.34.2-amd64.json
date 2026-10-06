@@ -108,8 +108,8 @@
     },
     {
       "path": "autoscaler.yaml",
-      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/254f91edfaa8b25d0cc41fd1f07be092372a7444/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
-      "sha256": "47fe594518fbf79d3991a72c258228e0ea3716534e3461d56dce18e7238d8f89",
+      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/f247b4df5c945706389038ce3973995686cfe0cf/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
+      "sha256": "95529b9b0506a818c8e90273874ed81aa70f2c860233f1ed1b0f9903a7f9dfd0",
       "version": null
     },
     {

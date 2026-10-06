@@ -137,7 +137,7 @@ python3 -m unittest discover -s scripts/util/kubernetes-iso/tests -v
 
 ## ISO 생성과 독립 재검증
 
-저장소 루트에서 실행합니다. Release용 빌드는 추적 파일의 변경을 먼저 commit해야 합니다. 현재 HEAD와 `GITHUB_REPOSITORY`가 산출물 provenance에 기록됩니다.
+저장소 루트에서 실행합니다. Release용 빌드는 추적 파일의 변경을 먼저 commit해야 합니다. 현재 HEAD와 `GITHUB_REPOSITORY`가 산출물 provenance에 기록됩니다. AutoScaler manifest는 실제 ServiceAccount에 연결된 storage·DRA informer의 get/list/watch 권한도 검사합니다. DRA 3종(ResourceClaim, ResourceSlice, DeviceClass)과 VolumeAttachment는 명시적인 읽기 전용 권한을 요구하며, 쓰기·wildcard 권한은 거부합니다.
 
 ```bash
 set -euo pipefail

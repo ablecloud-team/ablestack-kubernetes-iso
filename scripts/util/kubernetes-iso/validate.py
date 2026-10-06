@@ -63,7 +63,7 @@ def manifest_images(node):
 
 
 def validate_autoscaler_rbac(documents):
-    """Check the identity and read-only storage informer access of the payload."""
+    """Check bound identity and storage/DRA informer access of the payload."""
     documents = [d for d in documents if isinstance(d, dict)]
     deployment = next((d for d in documents if d.get('kind') == 'Deployment'
                        and d.get('metadata', {}).get('name') == 'cluster-autoscaler'), None)
@@ -82,15 +82,26 @@ def validate_autoscaler_rbac(documents):
              and d.get('metadata', {}).get('name') in bound_roles for r in d.get('rules', [])]
     require(rules, 'AutoScaler ClusterRoleBinding missing or mismatched')
     resources = ('storageclasses', 'csinodes', 'csidrivers', 'csistoragecapacities', 'volumeattachments')
-    for resource in resources:
-        matching = [r for r in rules if 'storage.k8s.io' in r.get('apiGroups', [])
-                    and resource in r.get('resources', []) and not r.get('resourceNames')]
-        verbs = {v for r in matching for v in r.get('verbs', [])}
-        require({'get', 'list', 'watch'}.issubset(verbs),
-                'AutoScaler storage informer get/list/watch missing: ' + resource)
-        if resource == 'volumeattachments':
-            require(verbs == {'get', 'list', 'watch'}, 'AutoScaler VolumeAttachment access must be read-only')
-    return {'service_account': namespace + '/' + account, 'storage_informers': list(resources)}
+    dra_resources = ('resourceclaims', 'resourceslices', 'deviceclasses')
+    reads = {'get', 'list', 'watch'}
+    for group, names, label in [('storage.k8s.io', resources, 'storage'),
+                                ('resource.k8s.io', dra_resources, 'DRA')]:
+        for resource in names:
+            matching = [r for r in rules if group in r.get('apiGroups', [])
+                        and resource in r.get('resources', []) and not r.get('resourceNames')]
+            verbs = {v for r in matching for v in r.get('verbs', [])}
+            require(reads.issubset(verbs),
+                    'AutoScaler ' + label + ' informer get/list/watch missing: ' + resource)
+            if group == 'resource.k8s.io' or resource == 'volumeattachments':
+                effective = [r for r in rules
+                             if ({group, '*'} & set(r.get('apiGroups', [])))
+                             and ({resource, '*'} & set(r.get('resources', [])))]
+                require(all('*' not in r.get('apiGroups', [])
+                            and '*' not in r.get('resources', [])
+                            and set(r.get('verbs', [])).issubset(reads) for r in effective),
+                        'AutoScaler ' + resource + ' access must be explicit and read-only')
+    return {'service_account': namespace + '/' + account,
+            'storage_informers': list(resources), 'dra_informers': list(dra_resources)}
 
 
 def validate_autoscaler_customizations(component, labels):
@@ -149,7 +160,7 @@ def validate_payload(root, recipe, recipe_hash):
         docs=list(yaml.safe_load_all((root/name).read_text()))
         require(all(isinstance(x,dict) and x.get('apiVersion') and x.get('kind') for x in docs if x is not None),'invalid Kubernetes YAML: '+name)
         if name == 'autoscaler.yaml':
-            validate_autoscaler_rbac(docs)
+            autoscaler_rbac = validate_autoscaler_rbac(docs)
         refs.update(manifest_images(docs))
     expected={x['reference'] for x in recipe['images']}
     require(refs.issubset(expected), 'manifest image missing from lock')
@@ -208,7 +219,7 @@ def validate_payload(root, recipe, recipe_hash):
                         sdk=component['sdk']
                         require(sdk['module'] in modules and sdk['version'] in modules, 'Provider binary SDK provenance mismatch')
             archive_reports.append({'reference':image['reference'],'architecture':'amd64','layers':len(diff_ids)})
-    return {'status':'PASS','scope':'ISO payload, source hashes, binary versions/ELF, Kubernetes YAML, OCI manifest/config/layer hashes; cluster lifecycle runtime is a separate gate','kubernetes_version':recipe['kubernetes_version'],'files':len(listed),'binaries':versions,'images':archive_reports,'binary_signatures':'Kubernetes official keyless signatures verified','component_binaries':'ELF and embedded Go source/SDK provenance verified','recipe_sha256':recipe_hash,'source_sha':manifest['source_sha']}
+    return {'status':'PASS','scope':'ISO payload, source hashes, binary versions/ELF, Kubernetes YAML, OCI manifest/config/layer hashes; cluster lifecycle runtime is a separate gate','kubernetes_version':recipe['kubernetes_version'],'files':len(listed),'binaries':versions,'images':archive_reports,'binary_signatures':'Kubernetes official keyless signatures verified','component_binaries':'ELF and embedded Go source/SDK provenance verified','recipe_sha256':recipe_hash,'source_sha':manifest['source_sha'],'autoscaler_rbac':autoscaler_rbac}
 
 
 def verify_containerd_import(root, images):

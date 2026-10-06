@@ -78,6 +78,8 @@ class AutoScalerRbacGates(unittest.TestCase):
     'spec':{'template':{'spec':{'serviceAccountName':'cluster-autoscaler'}}}},
    {'kind':'ClusterRole','metadata':{'name':'cluster-autoscaler'},'rules':[
     {'apiGroups':['storage.k8s.io'],'resources':['storageclasses','csinodes','csidrivers','csistoragecapacities','volumeattachments'],
+     'verbs':['get','list','watch']},
+    {'apiGroups':['resource.k8s.io'],'resources':['resourceclaims','resourceslices','deviceclasses'],
      'verbs':['get','list','watch']}]},
    {'kind':'ClusterRoleBinding','roleRef':{'apiGroup':'rbac.authorization.k8s.io','kind':'ClusterRole','name':'cluster-autoscaler'},
     'subjects':[{'kind':'ServiceAccount','name':'cluster-autoscaler','namespace':'kube-system'}]}]
@@ -97,6 +99,35 @@ class AutoScalerRbacGates(unittest.TestCase):
  def test_volumeattachment_write_is_rejected(self):
   self.documents[2]['rules'][0]['verbs'].append('delete')
   with self.assertRaisesRegex(ValueError,'read-only'):validate.validate_autoscaler_rbac(self.documents)
+
+ def test_dra_informer_reads_are_accepted(self):
+  report=validate.validate_autoscaler_rbac(self.documents)
+  self.assertEqual(report['dra_informers'],['resourceclaims','resourceslices','deviceclasses'])
+ def test_each_missing_dra_resource_is_rejected(self):
+  for resource in ['resourceclaims','resourceslices','deviceclasses']:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'][1]['resources'].remove(resource)
+   with self.subTest(resource=resource),self.assertRaisesRegex(ValueError,resource):
+    validate.validate_autoscaler_rbac(documents)
+ def test_each_missing_dra_read_verb_is_rejected(self):
+  for verb in ['get','list','watch']:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'][1]['verbs'].remove(verb)
+   with self.subTest(verb=verb),self.assertRaisesRegex(ValueError,'DRA informer get/list/watch'):
+    validate.validate_autoscaler_rbac(documents)
+ def test_dra_wrong_group_or_resource_name_restriction_is_rejected(self):
+  for field,value in [('apiGroups',['wrong.group']),('resourceNames',['single-claim'])]:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'][1][field]=value
+   with self.subTest(field=field),self.assertRaisesRegex(ValueError,'DRA informer'):
+    validate.validate_autoscaler_rbac(documents)
+ def test_dra_writes_and_wildcards_are_rejected(self):
+  for extra in [
+   {'apiGroups':['resource.k8s.io'],'resources':['resourceclaims'],'verbs':['update']},
+   {'apiGroups':['resource.k8s.io'],'resources':['resourceslices'],'verbs':['delete']},
+   {'apiGroups':['resource.k8s.io'],'resources':['deviceclasses'],'verbs':['*']},
+   {'apiGroups':['*'],'resources':['resourceclaims'],'verbs':['get']},
+   {'apiGroups':['resource.k8s.io'],'resources':['*'],'verbs':['get']}]:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'].append(extra)
+   with self.subTest(extra=extra),self.assertRaisesRegex(ValueError,'explicit and read-only'):
+    validate.validate_autoscaler_rbac(documents)
 
 class AutoScalerIdentityGates(unittest.TestCase):
  def setUp(self):
