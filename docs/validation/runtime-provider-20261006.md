@@ -74,3 +74,21 @@
 Local/Origin 산출물은 각각 검증했으나 서로 해시가 달라 비트 재현성을 주장하지 않습니다. 1.37.1은 DEV 후보입니다. 새 b46 ISO의 독립 clean cluster 반복, 전체 RT01–13/upgrade/HA/최종삭제, 대표24시간 및 DEV4시간은 미완료입니다. r9는 이전6b 설치 후 Provider를 별도 적용한 진단 시험이며 새 ISO 전체 qualification을 대체하지 않습니다. PR 병합과 공식 Upstream Release도 미완료입니다.
 
 1.35.9 r8에서는 실제2시간/120회 관측·앱HTTP12,120건 오류0을 확인했습니다. 외부 LB 연속2시간은 포함하지 않으며 기존 template identity #1251·대표24시간은 남아 있습니다. [RT12 기록](https://github.com/ablecloud-team/ablestack-cloud/issues/1230#issuecomment-6011035465).
+
+## 계획 유지보수 복구 게이트 재검증 완료 — #1263/#1264
+
+같은 GFS2 worker194에서 PDB와 LB 제외, drain, 일반 VM 정지/시작을 반복했습니다. CNI 준비를 확인하고 스케줄링/LB를 복귀하는 절차를 즉시 적용했습니다. 첫 실행의 실패 결과와 수정 절차의 성공 결과를 별도 run으로 보존합니다.
+
+| 실행 | 실제 관측 창 UTC | 기간 | 외부 LB 요청 | 오류 |
+|---|---|---|---|---|
+| Node Ready만으로 복귀한 첫 실행 | 2026-10-06T07:48:49.251497+00:00 → 2026-10-06T08:03:49.332473+00:00 | 900.081초 | 8,724 | timeout14 |
+| CNI/경로 게이트를 적용한 재실행 | 2026-10-06T07:59:37.337818+00:00 → 2026-10-06T08:09:37.352347+00:00 | 600.015초 | 5,993 | 0 |
+
+- 재실행에서는 Node Ready가 먼저 도달해도 cordon/LB 제외를 유지했습니다. 재기동 후 새 Calico/kube-proxy container startedAt, 실제 두 Pod Ready와 NetworkUnavailable=False를 함께 확인했습니다. CNI 준비 게이트 통과는17:04:09.374 KST입니다.
+- uncordon 전 다른 노드에서194 NodePort를 통해 healthy Pod에 HTTP20건/오류0 확인. 앱 replicas/readiness 복귀 후 양쪽 worker NodePort40건/오류0을 추가 확인하고 LB 제외를 제거했습니다. 실제 backend2 복귀17:04:24.495 확인.
+- 최종3Node Ready, worker cordon/exclusion 제거, control 기본 LB 제외 유지, CCM/AS1/1. 시험 PDB minAvailable1을 유지하며 강제 PDB 우회는 사용하지 않았습니다.
+- machine-id/DBus ID/systemUUID/SSH host fingerprint 동일, ROOT234 같은UUID/Ready/Primary GFS2. 앱65/65·HTTP100/오류0, DB100건·파일64개4MiB 체크섬 유지.
+
+수정된 운영 게이트는 이 관측 창에서 연결 오류가 재현되지 않았습니다. 제품 Cloud/일반 VM UI의 자동 유지보수 계약이나 전체6버전/HA 지원 PASS는 아닙니다. #1264의 제품 게이트 확대와 custom CNI/부분실패 검사는 미완료입니다. 기존 #1258 nativeAS25분 오류0 및 drain 없는195 정지226오류와 별개로 기록합니다.
+
+운영 단계는 [워커 유지보수 게이트 문서](worker-maintenance-20261006.md)에 정리했습니다.

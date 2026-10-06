@@ -264,4 +264,4 @@ fork의 작업 브랜치에서 변경하고 검증한 뒤 자신의 `origin`에 
 | Mold 다운로드에서 302 거부 | 영구 URL 사용 및 다운로드 중 `store.download.follow.redirects=true` 확인 |
 | 공식 qualification/component gate 실패 | stable 원본·공식 컴포넌트·실환경 PASS·공식 main 병합 조건 충족 후 재빌드 |
 
-구현 계약은 [상세 문서](scripts/util/kubernetes-iso/README.ko.md), 설계는 [ISO 이슈 #1228](https://github.com/ablecloud-team/ablestack-cloud/issues/1228) 및 [생명주기 Epic #1227](https://github.com/ablecloud-team/ablestack-cloud/issues/1227)을 참고합니다. 특정 시험 저장소·시험 Release·31번 환경의 검증 이력은 [별도 검증 보고서](docs/validation/iso-registration-20261006.md)에 보관합니다.
+구현 계약은 [상세 문서](scripts/util/kubernetes-iso/README.ko.md), 설계는 [ISO 이슈 #1228](https://github.com/ablecloud-team/ablestack-cloud/issues/1228) 및 [생명주기 Epic #1227](https://github.com/ablecloud-team/ablestack-cloud/issues/1227)을 참고합니다. 특정 시험 저장소·시험 Release·31번 환경의 검증 이력은 [별도 검증 보고서](docs/validation/iso-registration-20261006.md)에 보관합니다. Provider runtime 결과는 [실행 보고서](docs/validation/runtime-provider-20261006.md), 발견한 워커 복구 준비 절차는 [유지보수 검증 문서](docs/validation/worker-maintenance-20261006.md)를 참고합니다.
