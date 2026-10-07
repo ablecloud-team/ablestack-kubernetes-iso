@@ -40,10 +40,19 @@ class RecipeGates(unittest.TestCase):
  def test_stale_candidate_provenance_is_rejected_before_download(self):
   for component in ('provider','autoscaler'):
    for suffix in ('.json','-go-modules.txt'):
-    recipe=copy.deepcopy(self.recipe)
+    recipe=json.loads((HERE/'recipes/kubernetes-1.34.2-mold-cks-csi-amd64.json').read_text())
     for file in recipe['files']:
      if file['path']=='provenance/'+component+suffix:file['url']=file['url'].replace(recipe['components'][component]['source_sha'][:12],'0'*12)
     with self.subTest(component=component,suffix=suffix),self.assertRaisesRegex(ValueError,'candidate provenance source lock'):build.check_recipe(recipe)
+ def test_promoted_release_rejects_different_repository_or_tag(self):
+  for component in ('provider','autoscaler'):
+   for replacement in ('/other-owner/', '/releases/download/stale-tag/'):
+    recipe=copy.deepcopy(self.recipe)
+    for file in recipe['files']:
+     if file['path']=='provenance/'+component+'.json':
+      if replacement=='/other-owner/':file['url']=file['url'].replace('/ablecloud-team/',replacement)
+      else:file['url']=file['url'].replace('/releases/download/'+recipe['components'][component]['artifact_tag']+'/',replacement)
+    with self.subTest(component=component,replacement=replacement),self.assertRaisesRegex(ValueError,'release provenance source lock'):build.check_recipe(recipe)
  def test_unverified_provider_ownership_support_is_rejected(self):
   self.recipe['components']['provider']['features']=[]
   with self.assertRaisesRegex(ValueError,'ownership'):build.check_recipe(self.recipe)

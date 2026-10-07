@@ -114,6 +114,8 @@ def check_recipe(recipe):
             if len(tag) != 2:
                 raise ValueError('component provenance must use an immutable release asset: ' + name)
             release_tag = tag[1].split('/')[0]
+            if component.get('artifact_tag') and (release_tag != component['artifact_tag'] or tag[0] != '/' + component.get('artifact_repository', '') or urllib.parse.urlparse(source['url']).hostname != 'github.com'):
+                raise ValueError('component release provenance source lock mismatch: ' + name)
             if release_tag.startswith('mold-test-'):
                 expected_tag = 'mold-test-' + component['source_sha'][:12]
                 if name == 'autoscaler':
