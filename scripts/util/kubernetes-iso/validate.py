@@ -29,6 +29,8 @@ import tarfile
 import tempfile
 import yaml
 
+from release_support import validate_autoscaler_production_qualification
+
 
 def hash_file(path):
     h = hashlib.sha256()
@@ -134,6 +136,7 @@ def validate_payload(root, recipe, recipe_hash):
     required = {x['path'] for x in recipe['files']} | {'kubelet.service','10-kubeadm.conf','manifest.json','sbom.cdx.json','SHA256SUMS','docker/images.list'}
     require(required.issubset(actual_files) and all((root/x).stat().st_size>0 for x in required),'mandatory consumer payload missing or empty')
     require(manifest['features'] == recipe['features'], 'feature provenance mismatch')
+    validate_autoscaler_production_qualification(manifest)
     if recipe['features'].get('provider_ownership_v1'):
         provider = recipe['components']['provider']
         provenance = json.loads((root/'provenance/provider.json').read_text())

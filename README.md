@@ -35,11 +35,11 @@ profile은 `mold-cks`, 빌드 아키텍처는 `amd64`, Mold 등록 아키텍처�
 | 1.34.12 | 1.34.5 + Mold 패치 | 3.32.2 | [JSON](scripts/util/kubernetes-iso/recipes/kubernetes-1.34.12-amd64.json) |
 | 1.35.9 | 1.35.2 + Mold 패치 | 3.33.0 | [JSON](scripts/util/kubernetes-iso/recipes/kubernetes-1.35.9-amd64.json) |
 | 1.36.5 | 1.36.1 + Mold 패치 | 3.33.0 | [JSON](scripts/util/kubernetes-iso/recipes/kubernetes-1.36.5-amd64.json) |
-| 1.37.1 | 고정 1.37 개발 source + Mold 패치 | 3.33.0 | [개발 시험 JSON](scripts/util/kubernetes-iso/recipes/kubernetes-1.37.1-amd64.json) |
+| 1.37.1 | 고정 1.37 commit + Mold 패치; Mold 프로덕션 검증 PASS | 3.33.0 | [프로덕션 판정 JSON](scripts/util/kubernetes-iso/recipes/kubernetes-1.37.1-amd64.json) |
 
 Provider·AutoScaler에는 Mold API의 **HMAC-SHA256** 인증을 적용한 내부 컴포넌트를 사용합니다. recipe에 SDK/source SHA·이미지 digest·빌드 출처를 고정합니다. AutoScaler는 Kubernetes minor에 맞는 원본과 내부 패치를 조합합니다. CSI는 별도 SHA256 호환성 감사 전이므로 이 profile에 포함하지 않습니다.
 
-**1.37.1은 개발 시험 후보**입니다. 해당 recipe의 AutoScaler는 stable 원본이 아니며 공식 게시가 차단됩니다. recipe가 존재하거나 ISO 검증을 통과했다는 사실은 실제 클러스터 생성·확장·업그레이드·삭제 및 Provider/AutoScaler 런타임 지원 판정을 대신하지 않습니다. 공식 Release의 qualification과 증거를 확인합니다.
+**1.37.1 AutoScaler는 Mold 내 프로덕션 레벨로 판정했습니다.** 실제 자동 확장·축소·controller 재시작 및 노드 생명주기 검증에 근거한 [2026-10-07 사용자 판정](https://github.com/ablecloud-team/ablestack-cloud/issues/1228#issuecomment-6038989411)을 두 프로파일의 `features.autoscaler_qualification`에 production/PASS로 기록했습니다. 외부 원본은 고정 개발 commit이므로 `components.autoscaler.baseline_status=development-candidate` 출처 표기는 보존합니다. publisher는 stable 원본 또는 정확한 source·binary baseline·image digest·커스터마이징 해시·patch/minor·architecture·증거 URL에 묶인 Mold 프로덕션 판정을 인정합니다. 새 이미지나 다른 버전에 판정을 자동 적용하지 않습니다. 전체 lifecycle·CSI qualification, 공식 component/SDK 출처 및 immutable tag 조건은 각각 검사합니다.
 
 ## 공식 Release 다운로드
 
@@ -239,13 +239,13 @@ GitHub asset 주소는 **HTTP 302 redirect**를 반환합니다. 다운로드 �
 공식 게이트는 [publisher](scripts/util/kubernetes-iso/publish.py)가 검사합니다.
 
 1. SDK·Provider·AutoScaler의 공식 source/릴리즈와 이미지 digest를 recipe에 반영합니다. 후보 SDK와 시험 컴포넌트 출처를 제거합니다.
-2. minor별 stable AutoScaler를 확보하고 Provider LB/VPC·AutoScaler·노드 생명주기 실환경 검증을 완료합니다. recipe의 `runtime_qualification`에 `PASS`와 증거 URL을 기록합니다.
+2. minor별 stable AutoScaler 또는 검증한 정확한 빌드의 Mold 프로덕션 판정을 확보하고 Provider LB/VPC·AutoScaler·노드 생명주기 실환경 검증을 완료합니다. recipe의 `runtime_qualification`에 `PASS`와 증거 URL을 기록합니다.
 3. ISO 구현과 recipe를 공식 저장소 `main`에 병합합니다. Mold 소비 변경의 최종 브랜치는 Cloud `ablestack-europa`입니다.
 4. 병합된 source에 `k8s-v<version>-mold-cks-amd64-<revision>-<source8>` tag를 만들고 **공식 저장소에 tag를 push**합니다. tag Actions가 일치 버전을 빌드·검증하고 공식 publisher로 게시합니다.
 
 publisher는 ISO 한 개, 독립 검증 PASS, producer 저장소·현재 HEAD·정확한 tag 일치, `upstream/main` ancestry와 위 승격 조건을 요구합니다. 직접 publisher를 실행하는 유지관리자는 `upstream` remote를 공식 저장소로 설정하고 `GITHUB_REPOSITORY=ablecloud-team/ablestack-kubernetes-iso`로 생성한 산출물과 해당 source checkout을 사용해야 합니다. Actions의 공식 게시 경로가 이 설정을 수행합니다.
 
-기존 Release/tag/asset을 교체하지 않으며 `latest`를 변경하지 않습니다. 게시 후 인증 없는 전체 ISO GET과 SHA256 대조까지 수행합니다. recipe의 qualification이 `pending`이거나 development AutoScaler/후보 SDK가 남아 있으면 공식 게시가 차단됩니다.
+기존 Release/tag/asset을 교체하지 않으며 `latest`를 변경하지 않습니다. 게시 후 인증 없는 전체 ISO GET과 SHA256 대조까지 수행합니다. 전체 lifecycle/CSI qualification이 `pending`이거나 공식 component/SDK 조건이 충족되지 않으면 공식 게시가 차단됩니다. 개발 원본 commit 기반 AutoScaler도 정확한 빌드에 묶인 Mold production/PASS 판정을 충족하면 AutoScaler 출처만을 이유로 차단하지 않습니다.
 
 ## 기여와 문제 해결
 
@@ -262,7 +262,7 @@ fork의 작업 브랜치에서 변경하고 검증한 뒤 자신의 `origin`에 
 | fork Actions가 실행되지 않음 | Actions 활성화·기본 브랜치의 workflow·branch/path 필터·실행 권한 확인 |
 | fork에서 `publish=true`로 Release가 생기지 않음 | 일반 fork는 자동 게시 대상이 아님; `publish=false` 검증 artifact 사용 |
 | Mold 다운로드에서 302 거부 | 영구 URL 사용 및 다운로드 중 `store.download.follow.redirects=true` 확인 |
-| 공식 qualification/component gate 실패 | stable 원본·공식 컴포넌트·실환경 PASS·공식 main 병합 조건 충족 후 재빌드 |
+| 공식 qualification/component gate 실패 | stable 원본 또는 Mold 프로덕션 판정·공식 컴포넌트·실환경 PASS·공식 main 병합 조건 충족 후 재빌드 |
 
 구현 계약은 [상세 문서](scripts/util/kubernetes-iso/README.ko.md), 설계는 [ISO 이슈 #1228](https://github.com/ablecloud-team/ablestack-cloud/issues/1228) 및 [생명주기 Epic #1227](https://github.com/ablecloud-team/ablestack-cloud/issues/1227)을 참고합니다. 특정 시험 저장소·시험 Release·31번 환경의 검증 이력은 [별도 검증 보고서](docs/validation/iso-registration-20261006.md)에 보관합니다. Provider runtime 결과는 [실행 보고서](docs/validation/runtime-provider-20261006.md), 발견한 워커 복구 준비 절차는 [유지보수 검증 문서](docs/validation/worker-maintenance-20261006.md)를 참고합니다.
 
@@ -280,4 +280,4 @@ scripts/util/create-kubernetes-binaries-iso.sh \
 
 새 Provider의 `ownership-v1` 기능은 ISO에 포함된 component provenance와 이미지/source 검증을 통과한 경우에만 표시됩니다. Mold backend에는 public IP `allocationgeneration`과 조건부 IP 반환 기능이 필요합니다. 구버전 ISO의 장기 시험 클러스터는 재등록·업그레이드하지 않고, 새 ISO는 별도 클러스터에서 시험합니다.
 
-CSI 프로파일의 ISO 파일 검증과 실제 스토리지 검증은 각각 수행합니다. 해당 Kubernetes minor에서 생성·attach·확장·이동·snapshot/restore·Retain/Delete·실패 후 재시도를 통과하고 이슈 증거를 기록하기 전에는 공식 Release의 CSI qualification을 PASS로 올릴 수 없습니다. StorageClass에는 대상 Mold GFS2 Primary에 연결된 disk offering을 지정해야 합니다. 1.37 AutoScaler의 DEV baseline 제한과 Upstream 공식 Release 게이트도 계속 적용됩니다.
+CSI 프로파일의 ISO 파일 검증과 실제 스토리지 검증은 각각 수행합니다. 해당 Kubernetes minor에서 생성·attach·확장·이동·snapshot/restore·Retain/Delete·실패 후 재시도를 통과하고 이슈 증거를 기록하기 전에는 공식 Release의 CSI qualification을 PASS로 올릴 수 없습니다. StorageClass에는 대상 Mold GFS2 Primary에 연결된 disk offering을 지정해야 합니다. 1.37.1 AutoScaler의 Mold production/PASS 판정은 기본·CSI 프로파일에 동일하게 적용합니다. CSI 스토리지 qualification과 Upstream 공식 Release의 나머지 조건은 각각 검사합니다.

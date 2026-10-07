@@ -18,9 +18,11 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+import sys
 import unittest
 
 HERE=Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(HERE))
 def module(name):
  spec=importlib.util.spec_from_file_location(name,HERE/(name+'.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 build=module('build');validate=module('validate')

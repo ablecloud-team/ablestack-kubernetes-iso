@@ -28,9 +28,9 @@
 | 1.34.2 / 1.34.9 / 1.34.12 | 1.34.5 | 3.32.2 | stable 원본 + 내부 패치 |
 | 1.35.9 | 1.35.2 | 3.33.0 | stable 원본 + 내부 패치 |
 | 1.36.5 | 1.36.1 | 3.33.0 | stable 원본 + 내부 패치 |
-| 1.37.1 | 고정 1.37 개발 commit | 3.33.0 | 개발 후보, 정식 AutoScaler 릴리즈 전 공식 ISO 승격 금지 |
+| 1.37.1 | 고정 1.37 commit | 3.33.0 | Mold 프로덕션 판정/실환경 PASS; 원본 출처는 development-candidate 보존 |
 
-AutoScaler는 minor별 원본 인터페이스를 유지하면서 내부 SHA256 client를 적용합니다. 원본 SHA, 커스터마이징 SHA 및 파일 해시를 각각 기록합니다. `1.37`용 stable 릴리즈가 없으므로 개발 후보를 stable로 표시하지 않습니다.
+AutoScaler는 minor별 원본 인터페이스를 유지하면서 내부 SHA256 client를 적용합니다. 원본 SHA, 커스터마이징 SHA 및 파일 해시를 각각 기록합니다. 원본 고정 commit의 `development-candidate` 출처를 stable로 바꾸지 않습니다. 별도의 `features.autoscaler_qualification`에1.37.1의 Mold production/PASS 판정과 source·binary baseline·image digest·커스터마이징 해시·정확한 Kubernetes patch/minor·architecture·증거 URL을 기록합니다. [사용자 프로덕션 판정](https://github.com/ablecloud-team/ablestack-cloud/issues/1228#issuecomment-6038989411)은 정확히 검증한 빌드에 적용하며 source/digest 변경 시 재판정합니다.
 
 ## 생성 및 독립 검증
 
@@ -67,7 +67,7 @@ Release tag는 `k8s-v<version>-mold-cks-amd64-<revision>-<source8>`입니다. �
 
 Mold 등록의 checksum은 파일 SHA256의 hex에 `{SHA-256}` prefix를 붙입니다. manifest의 API `HMAC-SHA256`은 API 요청 인증 규칙이며 ISO 파일 checksum과 다른 항목입니다.
 
-공식 Release는 **ISO 전용 Upstream 저장소의 `main`에 포함된 commit**의 전용 tag를 공식 저장소에 push할 때 실행합니다. Mold 소비 코드의 최종 대상은 Cloud `ablestack-europa`입니다. 시험 후보 컴포넌트를 공식 Release로 재명명하지 않습니다. SDK·Provider·AutoScaler Upstream PR을 병합·릴리즈한 뒤 동일한 검증 절차로 공식 source/image digest를 recipe에 반영해야 합니다. Provider/AutoScaler·노드 생명주기 실환경 검증을 완료하고 recipe의 `runtime_qualification`에 PASS와 증거 URL을 기록해야 공식 게시가 가능합니다. qualification이 pending이거나 stable 원본 및 공식 컴포넌트 조건을 만족하지 않으면 공식 게시가 차단됩니다.
+공식 Release는 **ISO 전용 Upstream 저장소의 `main`에 포함된 commit**의 전용 tag를 공식 저장소에 push할 때 실행합니다. Mold 소비 코드의 최종 대상은 Cloud `ablestack-europa`입니다. 시험 후보 컴포넌트를 공식 Release로 재명명하지 않습니다. SDK·Provider·AutoScaler Upstream PR을 병합·릴리즈한 뒤 동일한 검증 절차로 공식 source/image digest를 recipe에 반영해야 합니다. Provider/AutoScaler·노드 생명주기 실환경 검증을 완료하고 recipe의 `runtime_qualification`에 PASS와 증거 URL을 기록해야 공식 게시가 가능합니다. 전체 lifecycle/CSI qualification이 pending이거나 공식 컴포넌트 조건을 만족하지 않으면 공식 게시가 차단됩니다. AutoScaler 조건은 stable 원본 또는 정확한 빌드에 대한 Mold 프로덕션 판정으로 충족할 수 있습니다. 원본의 development-candidate 표기만으로1.37.1 공식 게시를 금지하지 않습니다.
 
 ## 소비자 계약과 검증 범위
 

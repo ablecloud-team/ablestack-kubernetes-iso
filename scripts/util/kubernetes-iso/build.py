@@ -29,6 +29,8 @@ import urllib.parse
 
 import yaml
 
+from release_support import validate_autoscaler_production_qualification
+
 HERE = Path(__file__).resolve().parent
 MAX_ISO_BYTES = 2 * 1024**3
 
@@ -129,6 +131,7 @@ def check_recipe(recipe):
     sdk = recipe['components']['provider']['sdk']
     if not sdk['version'] or not re.fullmatch('[a-f0-9]{40}', sdk['source_sha']):
         raise ValueError('Provider SDK provenance is required')
+    validate_autoscaler_production_qualification(recipe)
 
 
 def download(file, target, cache):

@@ -21,6 +21,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from release_support import autoscaler_release_basis, validate_autoscaler_production_qualification
+
 
 def run(args):return subprocess.check_output(args,text=True).strip()
 
@@ -44,12 +46,14 @@ def main():
  source=registration['source_sha']
  if source!=run(['git','rev-parse','HEAD']):raise ValueError('source HEAD mismatch')
  tag=name.replace('kubernetes-','k8s-',1)
+ manifest=json.loads((args.directory/(name+'.manifest.json')).read_text())
+ validate_autoscaler_production_qualification(manifest)
  if args.mode=='official':
   manifest=json.loads((args.directory/(name+'.manifest.json')).read_text())
   qualification=manifest['features'].get('runtime_qualification',{})
   if qualification.get('status')!='PASS' or not qualification.get('evidence_urls'):raise ValueError('official Release requires documented Provider/AutoScaler and node lifecycle runtime qualification')
   if manifest['features'].get('csi') and (manifest['features'].get('csi_qualification',{}).get('status') != 'PASS' or not manifest['features'].get('csi_qualification',{}).get('evidence_urls')):raise ValueError('official CSI Release requires minor-specific storage runtime qualification')
-  if manifest['components']['autoscaler'].get('baseline_status') != 'stable':raise ValueError('official Release requires a stable minor-matched AutoScaler baseline')
+  autoscaler_release_basis(manifest)
   for component in manifest['components'].values():
    if not component['source_repository'].startswith('ablecloud-team/') or 'candidate_module' in component.get('sdk',{}):raise ValueError('official Release requires promoted Upstream component sources and SDK')
   if run(['git','describe','--exact-match','--tags',source])!=tag:raise ValueError('official immutable tag mismatch')
@@ -71,6 +75,7 @@ def main():
 - producer repository: `{args.repository}` / 공식 source branch: `main` / Mold 소비 branch: `ablestack-europa`
 - source SHA: `{source}`
 - AutoScaler baseline: `{autoscaler['original_baseline']}` / `{autoscaler['baseline_status']}` / `{autoscaler['binary_source_sha']}`
+- Mold AutoScaler 지원 판정: `{manifest['features'].get('autoscaler_qualification', {}).get('support_level', 'runtime qualification 참조')}` / `{manifest['features'].get('autoscaler_qualification', {}).get('status', '별도 판정 없음')}`
 - ISO 독립 추출·버전·ELF·공식 바이너리 서명·매니페스트·OCI blob·격리 containerd import: PASS
 - Mold URL 등록 주소: {url}
 - Mold checksum: `{registration['checksum']}`
