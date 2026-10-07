@@ -194,15 +194,15 @@
     },
     {
       "original": "ghcr.io/ablecloud-team/ablestack-kubernetes-provider:1.2.1-mold.1",
-      "resolved_from": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-772149d6bb25b52b08c85f35238ead7d6beb3f8b",
-      "reference": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:6a42b4d051369a6ab7e733debff1a3aac099d3707fbb5dd1060d5e31ff44c921",
-      "import_alias": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-772149d6bb25b52b08c85f35238ead7d6beb3f8b"
+      "resolved_from": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-95e66eaff4d17f0e072f019e9c82c196ec10980e",
+      "reference": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:cc9715de4bc26059666ab1757b6a4217493a6ae42fb2dbde378f72c9c4c1f9d3",
+      "import_alias": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-95e66eaff4d17f0e072f019e9c82c196ec10980e"
     },
     {
       "original": "ghcr.io/ablecloud-team/autoscaler:1.34.5-mold.1",
-      "resolved_from": "ghcr.io/dhslove/autoscaler:sha-a25cc00df8d74950aabca0799c084b77219bcb40-k8s1.36",
-      "reference": "ghcr.io/dhslove/autoscaler@sha256:5db213ade9fb4cc9cf0295cb2adb454be218c66e3cfcb69b8553740ced34d476",
-      "import_alias": "ghcr.io/dhslove/autoscaler:sha-a25cc00df8d74950aabca0799c084b77219bcb40-k8s1.36"
+      "resolved_from": "ghcr.io/dhslove/autoscaler:sha-2132862adc757e4547033e36e0502ca00f3d1762-k8s1.36",
+      "reference": "ghcr.io/dhslove/autoscaler@sha256:77e1cd39911063d6a55a5c8d99e548f6185fa312d09c9d33fa923ebf19e4a316",
+      "import_alias": "ghcr.io/dhslove/autoscaler:sha-2132862adc757e4547033e36e0502ca00f3d1762-k8s1.36"
     }
   ],
   "core_images": [
@@ -217,14 +217,14 @@
   "components": {
     "provider": {
       "source_repository": "dhslove/ablestack-kubernetes-provider",
-      "source_sha": "772149d6bb25b52b08c85f35238ead7d6beb3f8b",
-      "build_run": "https://github.com/dhslove/ablestack-kubernetes-provider/actions/runs/37519582928",
+      "source_sha": "95e66eaff4d17f0e072f019e9c82c196ec10980e",
+      "build_run": "https://github.com/dhslove/ablestack-kubernetes-provider/actions/runs/37554399662",
       "original_baseline": "Apache Provider main 2a46b8e43382bbd1564db7a9bfa56f9caa872d13",
       "architecture": "amd64",
       "api_signature": "HMAC-SHA256",
-      "image": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:6a42b4d051369a6ab7e733debff1a3aac099d3707fbb5dd1060d5e31ff44c921",
+      "image": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:cc9715de4bc26059666ab1757b6a4217493a6ae42fb2dbde378f72c9c4c1f9d3",
       "binary": "cloudstack-ccm",
-      "manifest_sha": "772149d6bb25b52b08c85f35238ead7d6beb3f8b",
+      "manifest_sha": "95e66eaff4d17f0e072f019e9c82c196ec10980e",
       "manifest_path": "deployment.yaml",
       "sdk": {
         "module": "github.com/ablecloud-team/ablestack-mold-go/v2",
@@ -239,8 +239,8 @@
     },
     "autoscaler": {
       "source_repository": "dhslove/autoscaler",
-      "source_sha": "a25cc00df8d74950aabca0799c084b77219bcb40",
-      "build_run": "https://github.com/dhslove/autoscaler/actions/runs/37410724401",
+      "source_sha": "2132862adc757e4547033e36e0502ca00f3d1762",
+      "build_run": "https://github.com/dhslove/autoscaler/actions/runs/37557568306",
       "original_baseline": "cluster-autoscaler-1.36.1",
       "binary_source_sha": "35e8a280425c76a4040f57ae0fa232a952c02024",
       "baseline_status": "stable",
@@ -248,18 +248,22 @@
       "architecture": "amd64",
       "api_signature": "HMAC-SHA256",
       "customization_files": {
-        "client.go": "87b2843cafee1707cd84a62d232c1b28fae7448ebb987506ee2811f6050e163a",
+        "client.go": "538b4149dfe18dd0e7ab0af0b22ee0da907c43ab8e759a7287475b85f571495a",
         "mold_signing_test.go": "9415df730560eb25906a1e005ced77874264b6e3a5007381421df8bd1b5f2036",
         "testdata/mold-signing.json": "622bd67d3ded3acc3151586d8c960b3f406a95515c23984c6ff03a9df99f97aa",
         "cks.go": "747b9521acc863a97894a35d6fc0a56dd02b1b4ca4f0c9aa91f75615f9ddcc1e",
         "mold_worker_identity.go": "eadc73316051cd70c921dbacdc917e5826ccf356c826c8e237ccff8e24be3d34",
         "mold_worker_identity_test.go": "3387f00d9aedb01758943bb67a1e6e8965e849c60cd983b46427c9329c2e47c8",
         "mold/apply-worker-identity.py": "0907ebb89e222f093d43f2fdb2a8d979386e5ab38354ff4367b21ef946728901",
-        "mold/worker-identity-provider-test.go.tmpl": "c8b43e2acfdeb735c336b002365bed3d03768e4c516188e3314ed64de6983097"
+        "mold/worker-identity-provider-test.go.tmpl": "c8b43e2acfdeb735c336b002365bed3d03768e4c516188e3314ed64de6983097",
+        "mold/apply-cloud-config.py": "7f1bd133832437ada84e6126fff010e0ef9fe2a8d0dab7397e4d59f617e9cdc3",
+        "cluster-autoscaler/cloudprovider/cloudstack/cloudstack_option.go": "04696e2a7dd9671cdb57af1cae627084712cc85b027417c5f90ed6ff72590829",
+        "cluster-autoscaler/cloudprovider/cloudstack/mold_project_config_test.go": "5eccf940300820183045165d5381d5a25d5aa46cbfabb6a2f787ed955c3710d4",
+        "cluster-autoscaler/cloudprovider/cloudstack/service/mold_project_scope_test.go": "9f0dfc2a74e3956af6b2efbd591e43781c72f9e55e18898d93ab5abc5355cce7"
       },
-      "image": "ghcr.io/dhslove/autoscaler@sha256:5db213ade9fb4cc9cf0295cb2adb454be218c66e3cfcb69b8553740ced34d476",
+      "image": "ghcr.io/dhslove/autoscaler@sha256:77e1cd39911063d6a55a5c8d99e548f6185fa312d09c9d33fa923ebf19e4a316",
       "binary": "cluster-autoscaler",
-      "manifest_sha": "a25cc00df8d74950aabca0799c084b77219bcb40",
+      "manifest_sha": "2132862adc757e4547033e36e0502ca00f3d1762",
       "manifest_path": "cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml"
     }
   },
