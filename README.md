@@ -186,11 +186,11 @@ gh run list --repo "$ISO_REPOSITORY" --workflow kubernetes-iso.yml --limit 5
 read -r -p '확인할 실제 Actions run ID: ' RUN_ID
 gh run watch "$RUN_ID" --repo "$ISO_REPOSITORY" --exit-status
 gh run download "$RUN_ID" --repo "$ISO_REPOSITORY" \
-  --name kubernetes-1.34.12-amd64 \
+  --name kubernetes-1.34.12-mold-cks-amd64 \
   --dir "$HOME/work/iso-artifacts/$RUN_ID/1.34.12"
 ```
 
-각 버전의 artifact 이름은 `kubernetes-<version>-amd64`이며 보존 기간은 **7일**입니다. artifact ZIP/Actions 페이지 URL은 Mold에 등록할 ISO 직접 다운로드 주소가 아닙니다. Local 또는 Actions 산출물은 검증한 ISO 파일을 사용하고, URL 등록에는 공개 Release나 접근 가능한 다운로드 서버의 고정 ISO 주소를 준비합니다.
+각 버전의 artifact 이름은 `kubernetes-<version>-<profile>-amd64`이며 보존 기간은 **7일**입니다. artifact ZIP/Actions 페이지 URL은 Mold에 등록할 ISO 직접 다운로드 주소가 아닙니다. Local 또는 Actions 산출물은 검증한 ISO 파일을 사용하고, URL 등록에는 공개 Release나 접근 가능한 다운로드 서버의 고정 ISO 주소를 준비합니다.
 
 빌드 관련 경로를 변경한 PR은 여섯 버전 matrix를 검증하며 Release를 게시하지 않습니다. 일반 branch push 자동 실행은 [workflow](.github/workflows/kubernetes-iso.yml)의 `on.push.branches`/`paths` 필터를 따르므로 임의 fork 브랜치에서 자동 실행된다고 가정하지 않습니다.
 
@@ -238,10 +238,18 @@ GitHub asset 주소는 **HTTP 302 redirect**를 반환합니다. 다운로드 �
 
 공식 게이트는 [publisher](scripts/util/kubernetes-iso/publish.py)가 검사합니다.
 
-1. SDK·Provider·AutoScaler의 공식 source/릴리즈와 이미지 digest를 recipe에 반영합니다. 후보 SDK와 시험 컴포넌트 출처를 제거합니다.
+1. SDK·Provider·AutoScaler의 공식 source/릴리즈와 이미지 digest를 recipe에 반영합니다. 공식 SDK를 실제 링크한 Provider를 빌드하고 공식 component Release에 출처를 고정합니다. Origin에서 검증한 동일 AutoScaler image/바이너리를 승격할 경우 `build_source_repository`와 원래 build_run/provenance는 보존합니다. 실제 빌드 출처를 Upstream으로 바꾸어 기록하지 않습니다.
 2. minor별 stable AutoScaler 또는 검증한 정확한 빌드의 Mold 프로덕션 판정을 확보하고 Provider LB/VPC·AutoScaler·노드 생명주기 실환경 검증을 완료합니다. recipe의 `runtime_qualification`에 `PASS`와 증거 URL을 기록합니다.
 3. ISO 구현과 recipe를 공식 저장소 `main`에 병합합니다. Mold 소비 변경의 최종 브랜치는 Cloud `ablestack-europa`입니다.
-4. 병합된 source에 `k8s-v<version>-mold-cks-amd64-<revision>-<source8>` tag를 만들고 **공식 저장소에 tag를 push**합니다. tag Actions가 일치 버전을 빌드·검증하고 공식 publisher로 게시합니다.
+4. **Actions → Official Kubernetes ISO Release**에서 `main`, `version=all`, 새 `revision`을 선택합니다. 기본 ISO 6종을 모두 빌드·독립 검증한 뒤 버전별 immutable tag/공식 Release를 생성합니다. 한 버전만 게시하려면 해당 patch를 선택합니다. 선택형 CSI는 별도 qualification을 유지하며 이 일괄 게시 대상에 포함하지 않습니다.
+
+```bash
+gh workflow run release-iso.yml \
+  --repo ablecloud-team/ablestack-kubernetes-iso --ref main \
+  -f version=all -f revision=r1
+```
+
+기존 tag push 경로도 유지합니다. 같은 source에 여러 버전 tag가 붙을 수 있으므로 publisher는 게시할 정확한 `refs/tags/<tag>`가 source SHA를 가리키는지 검사합니다.
 
 publisher는 ISO 한 개, 독립 검증 PASS, producer 저장소·현재 HEAD·정확한 tag 일치, `upstream/main` ancestry와 위 승격 조건을 요구합니다. 직접 publisher를 실행하는 유지관리자는 `upstream` remote를 공식 저장소로 설정하고 `GITHUB_REPOSITORY=ablecloud-team/ablestack-kubernetes-iso`로 생성한 산출물과 해당 source checkout을 사용해야 합니다. Actions의 공식 게시 경로가 이 설정을 수행합니다.
 
@@ -281,3 +289,5 @@ scripts/util/create-kubernetes-binaries-iso.sh \
 새 Provider의 `ownership-v1` 기능은 ISO에 포함된 component provenance와 이미지/source 검증을 통과한 경우에만 표시됩니다. Mold backend에는 public IP `allocationgeneration`과 조건부 IP 반환 기능이 필요합니다. 구버전 ISO의 장기 시험 클러스터는 재등록·업그레이드하지 않고, 새 ISO는 별도 클러스터에서 시험합니다.
 
 CSI 프로파일의 ISO 파일 검증과 실제 스토리지 검증은 각각 수행합니다. 해당 Kubernetes minor에서 생성·attach·확장·이동·snapshot/restore·Retain/Delete·실패 후 재시도를 통과하고 이슈 증거를 기록하기 전에는 공식 Release의 CSI qualification을 PASS로 올릴 수 없습니다. StorageClass에는 대상 Mold GFS2 Primary에 연결된 disk offering을 지정해야 합니다. 1.37.1 AutoScaler의 Mold production/PASS 판정은 기본·CSI 프로파일에 동일하게 적용합니다. CSI 스토리지 qualification과 Upstream 공식 Release의 나머지 조건은 각각 검사합니다.
+
+공식 component source/SDK와 검증된 바이너리 승격 범위는 [공식 릴리즈 검증 기록](docs/validation/official-release-20261008.md)을 참고합니다.

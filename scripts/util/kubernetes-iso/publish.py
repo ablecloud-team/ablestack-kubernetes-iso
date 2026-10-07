@@ -21,10 +21,44 @@ from pathlib import Path
 import re
 import subprocess
 
-from release_support import autoscaler_release_basis, validate_autoscaler_production_qualification
+from release_support import autoscaler_release_basis, validate_autoscaler_production_qualification, validate_runtime_qualification
 
 
 def run(args):return subprocess.check_output(args,text=True).strip()
+
+
+def verify_immutable_tag(source, tag):
+ if run(['git','rev-parse','refs/tags/'+tag+'^{commit}'])!=source:raise ValueError('official immutable tag mismatch')
+
+
+def api(path):
+ return json.loads(run(['gh','api',path]))
+
+
+def verify_official_components(manifest):
+ """Bind promoted releases to merged sources and the actual official SDK tag."""
+ for name,component in manifest['components'].items():
+  repository=component['source_repository']
+  default=api('repos/'+repository)['default_branch']
+  comparison=api('repos/'+repository+'/compare/'+component['source_sha']+'...'+default)
+  if comparison['behind_by'] != 0:raise ValueError('component source has not merged: '+name)
+  artifact_repository=component.get('artifact_repository')
+  artifact_tag=component.get('artifact_tag')
+  if artifact_repository!=repository or not artifact_tag:raise ValueError('official component Release lock missing: '+name)
+  release=api('repos/'+repository+'/releases/tags/'+artifact_tag)
+  if release['draft'] or release['prerelease']:raise ValueError('component Release is not official: '+name)
+  if api('repos/'+repository+'/commits/'+artifact_tag)['sha']!=component['source_sha']:raise ValueError('component Release source mismatch: '+name)
+  sdk=component.get('sdk')
+  if sdk:
+   sdk_repo=sdk['module'].removeprefix('github.com/').removesuffix('/v2')
+   if not sdk_repo.startswith('ablecloud-team/') or api('repos/'+sdk_repo+'/commits/'+sdk['version'])['sha']!=sdk['source_sha']:raise ValueError('official SDK tag source mismatch: '+name)
+ # Promotion changes only dependency identities. The tested Provider/SDK code must match.
+ q=manifest['features']['runtime_qualification']['provider_equivalence']
+ comparison=api('repos/'+manifest['components']['provider']['source_repository']+'/compare/'+q['runtime_source_sha']+'...'+manifest['components']['provider']['source_sha'])
+ if comparison.get('total_commits',0)>0 and (len(comparison.get('files',[]))>=300 or any(f['filename'] not in {'go.mod','go.sum'} for f in comparison['files'])):raise ValueError('Provider runtime source equivalence failed')
+ sdk=manifest['components']['provider']['sdk']
+ sdk_repo=sdk['module'].removeprefix('github.com/').removesuffix('/v2')
+ if api('repos/'+sdk_repo+'/compare/'+q['runtime_sdk_source_sha']+'...'+sdk['source_sha']).get('files'):raise ValueError('SDK runtime source equivalence failed')
 
 
 def main():
@@ -56,7 +90,9 @@ def main():
   autoscaler_release_basis(manifest)
   for component in manifest['components'].values():
    if not component['source_repository'].startswith('ablecloud-team/') or 'candidate_module' in component.get('sdk',{}):raise ValueError('official Release requires promoted Upstream component sources and SDK')
-  if run(['git','describe','--exact-match','--tags',source])!=tag:raise ValueError('official immutable tag mismatch')
+  validate_runtime_qualification(manifest)
+  verify_official_components(manifest)
+  verify_immutable_tag(source, tag)
   fetch=['git','fetch','upstream','main']
   if run(['git','rev-parse','--is-shallow-repository'])=='true':fetch.insert(2,'--unshallow')
   subprocess.run(fetch,check=True)
@@ -81,7 +117,8 @@ def main():
 - Mold checksum: `{registration['checksum']}`
 - GitHub asset URL의 HTTP 302 다운로드에는 Mold의 `store.download.follow.redirects=true`가 다운로드 중 필요합니다. 기존 값을 기록하고 다운로드 완료 후 운영 정책에 맞게 복원합니다.
 - CSI: {'내부 SHA256 GFS2 KVM opt-in 프로파일; 고정 이미지 8개 포함, 해당 minor 런타임 시험 별도' if manifest['features'].get('csi') else '기본 프로파일에는 포함하지 않음'}.
-- 클러스터 생성/확장/업그레이드 및 LB/VPC 런타임 검증은 별도 생명주기 검증 범위입니다.
+- 실환경 판정: `{manifest['features'].get('runtime_qualification', {}).get('status', 'pending')}` / `{manifest['features'].get('runtime_qualification', {}).get('method', '별도 검증')}`. 공식 SDK 신규 빌드와 구현 내용 동일성, 기존 GFS2 실환경 증거의 적용 범위는 manifest의 qualification/evidence_urls를 확인합니다.
+- 클러스터 생성/확장/업그레이드 및 LB/VPC 런타임 검증의 환경·artifact 적용 범위는 별도 생명주기 기록을 따릅니다.
 ''')
  files=sorted(x for x in args.directory.iterdir() if x.is_file() and x.name.startswith(name))
  sums=args.directory/'SHA256SUMS'

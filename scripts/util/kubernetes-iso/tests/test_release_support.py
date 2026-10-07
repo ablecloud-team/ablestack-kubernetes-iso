@@ -17,13 +17,15 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import os
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE))
-from release_support import autoscaler_release_basis, validate_autoscaler_production_qualification
+from release_support import autoscaler_release_basis, validate_autoscaler_production_qualification, validate_runtime_qualification
 
 spec = importlib.util.spec_from_file_location('iso_publish', HERE / 'publish.py')
 publisher = importlib.util.module_from_spec(spec)
@@ -101,7 +103,9 @@ class ProductionQualification(unittest.TestCase):
                     publisher.main()
 
     def test_internal_autoscaler_acceptance_does_not_skip_lifecycle_gate(self):
-        self.assert_official_publish_still_rejects(self.recipe,'node lifecycle runtime qualification')
+        r = copy.deepcopy(self.recipe)
+        r['features']['runtime_qualification'] = {'status':'pending', 'evidence_urls':[]}
+        self.assert_official_publish_still_rejects(r,'node lifecycle runtime qualification')
 
     def test_internal_autoscaler_acceptance_does_not_skip_csi_gate(self):
         r = json.loads((HERE / 'recipes/kubernetes-1.37.1-mold-cks-csi-amd64.json').read_text())
@@ -110,8 +114,40 @@ class ProductionQualification(unittest.TestCase):
 
     def test_internal_autoscaler_acceptance_does_not_skip_component_or_sdk_promotion(self):
         r = copy.deepcopy(self.recipe)
-        r['features']['runtime_qualification'] = {'status':'PASS','evidence_urls':['https://example.com/runtime']}
+        r['components']['provider']['sdk']['candidate_module'] = 'github.com/dhslove/ablestack-mold-go/v2'
         self.assert_official_publish_still_rejects(r,'promoted Upstream component sources and SDK')
+
+    def test_runtime_promotion_is_bound_to_version_components_and_sdk(self):
+        validate_runtime_qualification(self.recipe)
+        for name, field in [('provider','source_sha'), ('provider','image'), ('autoscaler','image')]:
+            r = copy.deepcopy(self.recipe)
+            r['features']['runtime_qualification']['components'][name][field] = 'stale'
+            with self.assertRaisesRegex(ValueError,'component lock mismatch'):
+                validate_runtime_qualification(r)
+        r = copy.deepcopy(self.recipe)
+        r['features']['runtime_qualification']['kubernetes_version'] = '1.37.2'
+        with self.assertRaisesRegex(ValueError,'version/architecture'):
+            validate_runtime_qualification(r)
+        r = copy.deepcopy(self.recipe)
+        r['components']['provider']['sdk']['source_sha'] = '0'*40
+        with self.assertRaisesRegex(ValueError,'SDK lock mismatch'):
+            validate_runtime_qualification(r)
+
+    def test_multiple_version_tags_at_one_source_are_allowed_exactly(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            subprocess.run(['git','init','--quiet',temporary],check=True)
+            previous=os.getcwd()
+            try:
+                os.chdir(temporary)
+                subprocess.run(['git','-c','user.name=Test','-c','user.email=test@example.com','commit','--allow-empty','-m','fixture','--quiet'],check=True)
+                source=publisher.run(['git','rev-parse','HEAD'])
+                for tag in ['k8s-v1.34.2-mold-cks-amd64-r1-'+source[:8], 'k8s-v1.37.1-mold-cks-amd64-r1-'+source[:8]]:
+                    subprocess.run(['git','tag',tag],check=True)
+                    publisher.verify_immutable_tag(source,tag)
+                with self.assertRaisesRegex(ValueError,'immutable tag mismatch'):
+                    publisher.verify_immutable_tag('0'*40,tag)
+            finally:
+                os.chdir(previous)
 
 
 if __name__ == '__main__':

@@ -70,3 +70,30 @@ def autoscaler_release_basis(document):
     if qualification:
         return 'mold-production-qualified'
     raise ValueError('official Release requires a stable baseline or exact Mold production qualification')
+
+
+def validate_runtime_qualification(document):
+    qualification = document['features'].get('runtime_qualification', {})
+    if qualification.get('status') != 'PASS' or not qualification.get('evidence_urls'):
+        raise ValueError('official Release requires documented node lifecycle runtime qualification')
+    if (qualification.get('kubernetes_version') != document['kubernetes_version']
+            or qualification.get('architecture') != document['architecture']):
+        raise ValueError('runtime qualification version/architecture mismatch')
+    for name, component in document['components'].items():
+        lock = qualification.get('components', {}).get(name, {})
+        for field in ('source_sha', 'image'):
+            if lock.get(field) != component[field]:
+                raise ValueError('runtime qualification component lock mismatch: ' + name + '/' + field)
+        if component.get('sdk') and lock.get('sdk_source_sha') != component['sdk']['source_sha']:
+            raise ValueError('runtime qualification SDK lock mismatch: ' + name)
+    equivalence = qualification.get('provider_equivalence', {})
+    if (qualification.get('method') != 'runtime-and-source-equivalence'
+            or not re.fullmatch('[a-f0-9]{40}', equivalence.get('runtime_source_sha', ''))
+            or not re.fullmatch('[a-f0-9]{40}', equivalence.get('runtime_sdk_source_sha', ''))):
+        raise ValueError('runtime qualification requires documented Provider/SDK source equivalence')
+    for url in qualification['evidence_urls']:
+        parsed = urlparse(url) if isinstance(url, str) else None
+        if (parsed is None or parsed.scheme != 'https' or not parsed.hostname
+                or parsed.username or parsed.password):
+            raise ValueError('runtime qualification requires public HTTPS evidence URLs')
+    return qualification

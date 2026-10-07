@@ -1,0 +1,133 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+name: Official Kubernetes ISO Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact patch version, or all six basic-profile versions
+        required: true
+        type: choice
+        options: [all, '1.34.2', '1.34.9', '1.34.12', '1.35.9', '1.36.5', '1.37.1']
+        default: all
+      revision:
+        description: Immutable revision (r1, r2, ...)
+        type: string
+        default: r1
+permissions:
+  contents: read
+concurrency:
+  group: official-kubernetes-iso-release
+  cancel-in-progress: false
+jobs:
+  plan:
+    if: github.repository == 'ablecloud-team/ablestack-kubernetes-iso' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    outputs:
+      versions: ${{ steps.plan.outputs.versions }}
+    steps:
+      - id: plan
+        env:
+          VERSION: ${{ inputs.version }}
+          REVISION: ${{ inputs.revision }}
+        run: |
+          python3 - <<'PYCODE'
+          import json, os, re
+          versions=['1.34.2','1.34.9','1.34.12','1.35.9','1.36.5','1.37.1']
+          version=os.environ['VERSION']
+          assert version=='all' or version in versions
+          assert re.fullmatch(r'r[1-9][0-9]*',os.environ['REVISION'])
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+              out.write('versions='+json.dumps(versions if version=='all' else [version])+'\n')
+          PYCODE
+  iso:
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJSON(needs.plan.outputs.versions) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version: '1.26.8'
+          cache: false
+      - name: Install independent ISO tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y skopeo xorriso python3-yaml
+          sudo install -d -m 0711 /run/containerd
+          scripts/util/kubernetes-iso/setup-tools.sh "$RUNNER_TEMP/mold-iso-tools"
+          echo "$RUNNER_TEMP/mold-iso-tools" >> "$GITHUB_PATH"
+          echo "$RUNNER_TEMP/mold-iso-tools/bin" >> "$GITHUB_PATH"
+      - name: Recipe and rejection tests
+        run: python3 -m unittest discover -s scripts/util/kubernetes-iso/tests -v
+      - name: Build and independently validate
+        env:
+          VERSION: ${{ matrix.version }}
+          REVISION: ${{ inputs.revision }}
+        run: |
+          scripts/util/create-kubernetes-binaries-iso.sh --recipe "scripts/util/kubernetes-iso/recipes/kubernetes-$VERSION-amd64.json" --output "$RUNNER_TEMP/iso-output" --revision "$REVISION"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kubernetes-${{ matrix.version }}-mold-cks-amd64
+          path: ${{ runner.temp }}/iso-output/
+          compression-level: 0
+          retention-days: 7
+  publish:
+    needs: [plan, iso]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJSON(needs.plan.outputs.versions) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: kubernetes-${{ matrix.version }}-mold-cks-amd64
+          path: ${{ runner.temp }}/iso-output/
+      - name: Publish immutable official Release and verify public download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git remote add upstream https://github.com/ablecloud-team/ablestack-kubernetes-iso.git
+          NAME=$(basename "$RUNNER_TEMP/iso-output/"*.iso .iso)
+          TAG=${NAME/kubernetes-/k8s-}
+          # GITHUB_TOKEN-created tags do not dispatch duplicate push builds.
+          python3 - "$TAG" <<'PYCODE'
+          import json, os, subprocess, sys
+          tag=sys.argv[1]; repo=os.environ['GITHUB_REPOSITORY']; sha=os.environ['GITHUB_SHA']
+          path='repos/'+repo+'/git/ref/tags/'+tag
+          existing=subprocess.run(['gh','api',path],capture_output=True,text=True)
+          if existing.returncode==0:
+              assert json.loads(existing.stdout)['object']['sha']==sha, 'existing tag source mismatch'
+          else:
+              assert 'HTTP 404' in existing.stderr, existing.stderr
+              subprocess.run(['gh','api','-X','POST','repos/'+repo+'/git/refs','-f','ref=refs/tags/'+tag,'-f','sha='+sha],check=True)
+          PYCODE
+          git fetch upstream "refs/tags/$TAG:refs/tags/$TAG"
+          python3 scripts/util/kubernetes-iso/publish.py --directory "$RUNNER_TEMP/iso-output" --repository "$GITHUB_REPOSITORY" --mode official
