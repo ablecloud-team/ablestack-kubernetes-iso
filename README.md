@@ -299,11 +299,11 @@ scripts/util/create-kubernetes-binaries-iso.sh \
 
 기본 `mold-cks`는 Kubernetes bootstrap/CNI·Provider·AutoScaler·Headlamp에 필요한 payload입니다. CSI는 애플리케이션 PVC/PV용 Mold 데이터 볼륨 생성·attach·확장·snapshot/복원·Retain/Delete를 담당하며 추가 API 권한·스토리지 정책과 controller/node 드라이버를 요구합니다. 노드 VM의 ROOT를 GFS2 Primary에 배치하는 것과 별개입니다. 기본 클러스터에서 필수로 설치하지 않고 데이터 볼륨 관리가 필요한 클러스터에서 명시적으로 선택합니다.
 
-2026-10-08 기본6종 게시 시점의 공식 Release는 `mold-cks` 프로파일입니다. CSI profile은 내부 HMAC-SHA256과 GFS2 실환경 시험 결과가 있으나 공식 source/SDK 승격 및 개별 qualification·게시 단계가 남아 있습니다. CSI를 미구현 기능 또는 SHA256 감사 이전으로 설명하지 않습니다. 이름에 csi를 추가하거나 기본 ISO에 `enablecsi=true`만 전달해도 CSI payload를 사용할 수 없습니다.
+2026-10-08 공식 ISO6종은 `mold-cks` 프로파일입니다. 정식 Mold SDK를 사용하는 [CSI 드라이버·GFS2 배포 bundle](https://github.com/ablecloud-team/ablestack-kubernetes-csi/releases/tag/mold-csi-r1-a135d6fc75fd)의 공식 source/이미지/Release 승격을 완료했습니다. bundle에는 manifest·snapshot CRD·profile.json·이미지 archive·바이너리와 SHA256SUMS가 포함됩니다. 기본 ISO로 배포한 클러스터에 별도 설치하려면 해당 드라이버 Release의 자격증명/권한 및 설치 절차를 따릅니다. 선택형 CSI ISO의 recipe는 기존 시험 payload를 고정하므로 이 신규 드라이버 Release 게시와 개별 CSI ISO qualification·게시 상태를 구분합니다. CSI를 미구현 기능 또는 SHA256 감사 이전으로 설명하지 않습니다. 이름에 csi를 추가하거나 기본 ISO에 `enablecsi=true`만 전달해도 CSI payload를 사용할 수 없습니다.
 
 ### CSI 설치 및 PVC 사용
 
-1. 같은 Kubernetes patch의 `mold-cks-csi` ISO를 별도 이름/URL/checksum으로 등록합니다. 공식 운영에는 공식 승격/qualification 완료 후 게시된 CSI Release를 사용합니다. 현재 recipe/Origin trial은 시험용입니다.
+1. 같은 Kubernetes patch의 `mold-cks-csi` ISO를 별도 이름/URL/checksum으로 등록합니다. Mold 자동 설치에는 공식 승격/qualification 완료 후 게시된 CSI ISO Release를 사용합니다. 현재 recipe/Origin trial은 시험용입니다.
 2. 클러스터 생성에서 해당 CSI ISO를 선택하고 **고급 설정 → CSI 활성화**(`enablecsi=true`)를 켭니다. Europa backend는 ISO의 내부 bundle·checksum·immutable image digest/HMAC-SHA256 profile을 확인하여 CSI controller/node 및 snapshot CRD를 설치합니다. Mold가 관리하는 cloudstack-secret을 사용합니다.
 3. GFS2 Primary에 실제 매칭되는 shared/custom disk offering UUID를 StorageClass의 `csi.cloudstack.apache.org/disk-offering-id`에 설정합니다. CLVM/CLVM_NG는 사용하지 않습니다. 노드 compute offering의 ROOT 배치와 PVC 데이터 disk offering의 배치를 각각 확인합니다.
 4. 아래 StorageClass를 만들고 PVC의 `storageClassName: mold-gfs2-retain`을 지정해 앱 Pod에 mount합니다. `WaitForFirstConsumer`에서는 소비 Pod가 스케줄될 때 provisioning하므로 PVC만 생성한 Pending은 실패를 뜻하지 않습니다. Retain은 PVC 삭제 후 데이터 보존·수동 회수이고 Delete는 실제 볼륨 삭제로 연결됩니다. [StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/), [PV/PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)의 정책을 용도에 맞게 선택합니다.

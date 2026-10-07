@@ -70,7 +70,7 @@ def registration_usage_notes(registration, manifest):
  evidence=qualification.get('evidence_urls', [])
  links='\n'.join('- '+url for url in evidence)
  csi=manifest['features'].get('csi', False)
- storage=('이 ISO에는 내부 HMAC-SHA256 CSI 드라이버·고정 sidecar 이미지·snapshot CRD가 포함됩니다. 설치를 요청하려면 클러스터 생성의 고급 설정에서 CSI 활성화를 선택합니다.' if csi else '이 ISO는 기본 `mold-cks` 프로파일이며 CSI 드라이버·sidecar·snapshot CRD를 포함하지 않습니다. CSI를 사용하려면 같은 Kubernetes 버전의 별도 `mold-cks-csi` ISO가 필요합니다. 이름에 csi를 넣거나 기본 ISO에서 CSI 활성화만 선택해도 CSI payload가 추가되지는 않습니다.')
+ storage=('이 ISO에는 내부 HMAC-SHA256 CSI 드라이버·고정 sidecar 이미지·snapshot CRD가 포함됩니다. 설치를 요청하려면 클러스터 생성의 고급 설정에서 CSI 활성화를 선택합니다.' if csi else '이 ISO는 기본 `mold-cks` 프로파일이며 CSI 드라이버·sidecar·snapshot CRD를 포함하지 않습니다. Mold 자동 설치에는 같은 Kubernetes 버전의 별도 `mold-cks-csi` ISO가 필요합니다. 기존 클러스터에는 공식 CSI 드라이버 Release의 manifest/profile을 별도로 설치할 수 있으며, 해당 Release의 API 권한과 설치 절차를 따릅니다. 이름에 csi를 넣거나 기본 ISO에서 CSI 활성화만 선택해도 CSI payload가 추가되지는 않습니다.')
  return f"""
 ## Mold 등록 이름과 입력
 
@@ -100,7 +100,7 @@ CSI를 켜면 데이터 볼륨/snapshot API 권한, controller/node 드라이버
 
 ## CSI 사용 절차
 
-1. **같은 patch 버전의 `mold-cks-csi` ISO를 별도 이름·URL·checksum으로 등록**합니다. CSI 공식 Release가 게시되기 전의 recipe/Origin trial 산출물은 시험용입니다. 공식 운영용 CSI ISO는 공식 승격/qualification 완료 뒤 게시된 CSI Release를 선택합니다.
+1. **같은 patch 버전의 `mold-cks-csi` ISO를 별도 이름·URL·checksum으로 등록**합니다. CSI ISO 공식 Release가 게시되기 전의 recipe/Origin trial 산출물은 시험용입니다. 공식 운영용 CSI ISO는 공식 승격/qualification 완료 뒤 게시된 CSI Release를 선택합니다.
 2. Mold에서 새 Kubernetes 클러스터를 생성할 때 CSI ISO의 지원 버전 항목을 선택하고 **고급 설정 → CSI 활성화**(`enablecsi=true`)를 선택합니다. 검증된 Europa backend가 ISO의 내부 bundle/checksum/digest와 HMAC-SHA256 profile을 확인하고 controller/node 드라이버를 배포합니다. 실제 자격증명은 Mold가 관리하는 `kube-system/cloudstack-secret`을 사용하며 ISO/README에 넣지 않습니다.
 3. **GFS2 Primary에 매칭되는 shared/custom disk offering의 실제 UUID**를 StorageClass에 지정합니다. CLVM/CLVM_NG를 선택하지 않습니다. StorageClass 이름만 GFS2로 정해도 저장소가 선택되지는 않습니다. 노드 ROOT 배치용 compute offering과 PVC 데이터용 disk offering을 각각 확인합니다.
 4. 아래 StorageClass를 기반으로 PVC의 `storageClassName`을 지정하고 애플리케이션 Pod에 mount합니다. `WaitForFirstConsumer`는 Pod의 스케줄링을 기다리므로 PVC만 만들었을 때 Pending일 수 있습니다. 예시의 Retain은 PVC 삭제 후 데이터를 보존하며 운영자가 회수 절차를 관리합니다. Delete 정책은 실제 데이터 볼륨 삭제로 연결되므로 용도에 맞게 선택합니다.
