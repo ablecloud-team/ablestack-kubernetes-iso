@@ -37,7 +37,7 @@ profile은 `mold-cks`, 빌드 아키텍처는 `amd64`, Mold 등록 아키텍처�
 | 1.36.5 | 1.36.1 + Mold 패치 | 3.33.0 | [JSON](scripts/util/kubernetes-iso/recipes/kubernetes-1.36.5-amd64.json) |
 | 1.37.1 | 고정 1.37 commit + Mold 패치; Mold 프로덕션 검증 PASS | 3.33.0 | [프로덕션 판정 JSON](scripts/util/kubernetes-iso/recipes/kubernetes-1.37.1-amd64.json) |
 
-Provider·AutoScaler에는 Mold API의 **HMAC-SHA256** 인증을 적용한 내부 컴포넌트를 사용합니다. recipe에 SDK/source SHA·이미지 digest·빌드 출처를 고정합니다. AutoScaler는 Kubernetes minor에 맞는 원본과 내부 패치를 조합합니다. CSI는 별도 SHA256 호환성 감사 전이므로 이 profile에 포함하지 않습니다.
+Provider·AutoScaler에는 Mold API의 **HMAC-SHA256** 인증을 적용한 내부 컴포넌트를 사용합니다. recipe에 SDK/source SHA·이미지 digest·빌드 출처를 고정합니다. AutoScaler는 Kubernetes minor에 맞는 원본과 내부 패치를 조합합니다. CSI는 PVC/PV 데이터 볼륨 관리가 필요한 클러스터에서 명시적으로 선택하는 별도 `mold-cks-csi` 프로파일입니다. 내부 HMAC-SHA256 CSI의 GFS2 실환경 시험은 진행했으며 공식 source/SDK 및 프로파일별 qualification·게시 단계는 기본 ISO와 별도로 관리합니다.
 
 **1.37.1 AutoScaler는 Mold 내 프로덕션 레벨로 판정했습니다.** 실제 자동 확장·축소·controller 재시작 및 노드 생명주기 검증에 근거한 [2026-10-07 사용자 판정](https://github.com/ablecloud-team/ablestack-cloud/issues/1228#issuecomment-6038989411)을 두 프로파일의 `features.autoscaler_qualification`에 production/PASS로 기록했습니다. 외부 원본은 고정 개발 commit이므로 `components.autoscaler.baseline_status=development-candidate` 출처 표기는 보존합니다. publisher는 stable 원본 또는 정확한 source·binary baseline·image digest·커스터마이징 해시·patch/minor·architecture·증거 URL에 묶인 Mold 프로덕션 판정을 인정합니다. 새 이미지나 다른 버전에 판정을 자동 적용하지 않습니다. 전체 lifecycle·CSI qualification, 공식 component/SDK 출처 및 immutable tag 조건은 각각 검사합니다.
 
@@ -218,13 +218,15 @@ gh run download "$RUN_ID" --repo "$ISO_REPOSITORY" \
 
 | Mold 입력 / API 필드 | `registration.json` 값 |
 | --- | --- |
-| 이름 / `name` | `name` (개발 시험은 DEV 등 식별 가능한 이름 사용) |
+| 이름 / `name` | 릴리즈의 `registration.json.name` 권장; version/profile/arch/revision/source를 구분하는 표시 이름 |
 | Kubernetes 버전 / `semanticversion` | `kubernetesversion`, 예: `1.34.12` |
 | ISO URL / `url` | 게시된 `download_url` 또는 자신이 제공하는 실제 고정 ISO URL |
 | 체크섬 / `checksum` | `{SHA-256}` + ISO SHA256 hex |
 | 아키텍처 / `arch` | `x86_64` |
 | 최소 CPU / `mincpunumber` | `2` |
 | 최소 메모리 / `minmemory` | `2048` MiB |
+
+이름은 표시용이므로 변경할 수 있으며 Kubernetes 버전이나 CSI 활성화를 결정하지 않습니다. UI에서는 이름이 필수입니다. URL 등록 API에서 생략하면 `v<semanticversion>` 또는 `v<semanticversion>-<Zone 이름>`을 생성하지만, 기본·CSI·revision을 구분하려면 릴리즈의 권장 이름을 그대로 사용합니다. 예: `kubernetes-v1.34.12-mold-cks-amd64-r1-b55ee065`. 등록 중 내부 ISO 이름에 `-Kubernetes-Binaries-ISO`가 붙으므로255자 저장 한도를 고려해 입력 이름은231자 이내의 간결한 이름을 권장합니다. 시스템 VM 예약 이름과 혼동하는 이름을 피합니다. 이름 중복 방지보다 선택한 지원 버전 UUID·별도 `semanticversion`·URL·checksum의 대응 관계가 중요합니다.
 
 CPU 2/RAM 2048 MiB는 지원 버전 API 등록 최소값입니다. 실제 control-plane/worker/etcd 노드 offering은 별도 용량 설계가 필요합니다. secondary storage 다운로드 방식으로 등록할 때는 `directdownload=false`를 사용합니다. Local 파일은 UI의 **로컬에서 Kubernetes 버전 추가** 업로드 경로로 등록할 수도 있습니다.
 
@@ -274,6 +276,10 @@ fork의 작업 브랜치에서 변경하고 검증한 뒤 자신의 `origin`에 
 
 구현 계약은 [상세 문서](scripts/util/kubernetes-iso/README.ko.md), 설계는 [ISO 이슈 #1228](https://github.com/ablecloud-team/ablestack-cloud/issues/1228) 및 [생명주기 Epic #1227](https://github.com/ablecloud-team/ablestack-cloud/issues/1227)을 참고합니다. 특정 시험 저장소·시험 Release·31번 환경의 검증 이력은 [별도 검증 보고서](docs/validation/iso-registration-20261006.md)에 보관합니다. Provider runtime 결과는 [실행 보고서](docs/validation/runtime-provider-20261006.md), 발견한 워커 복구 준비 절차는 [유지보수 검증 문서](docs/validation/worker-maintenance-20261006.md)를 참고합니다.
 
+## Mold Europa 검증 환경
+
+이 저장소의 ISO는 **Mold Europa / Cloud `ablestack-europa`**를 대상으로 검증했습니다. 31번 KVM·amd64/x86_64·GFS2 Primary 환경에서 지원6버전의 배포·앱/데이터·Provider LB/VPC·minor별 AutoScaler 및 노드 생명주기를 확인했습니다. [버전별 실환경 기록](https://github.com/ablecloud-team/ablestack-cloud/blob/c169d9a203f49ce07e038297873bc3c24cd8ffb4/docs/operations/kubernetes-lifecycle/qualification-20261007.md)과 [공식 ISO6종의 build/게시·공개 GET/hash](https://github.com/ablecloud-team/ablestack-cloud/issues/1228#issuecomment-6042447470)를 연결합니다. 공식 SDK 신규 Provider의 빌드/race·기존 구현 내용 동일성과 AutoScaler 동일 image/binary digest를 근거로 승격했습니다. 이번 최종 ISO6개를 모두 fresh 클러스터에 다시 배포한 시험으로 확대하지 않습니다.
+
 ## 선택형 CSI ISO 프로파일
 
 기본 `mold-cks` 프로파일과 GFS2 Primary/KVM 시험용 `mold-cks-csi` 프로파일을 각각 빌드합니다. Actions의 `profile` 입력으로 선택하며, Origin 변경 검증은 지원 버전 6개와 두 프로파일의 조합으로 진행합니다. CSI 프로파일은 SHA256 내부 드라이버·sidecar 이미지 8개·snapshot CRD·프로파일 체크섬을 함께 포함합니다. 기본 ISO의 CSI 활성화 여부는 바뀌지 않습니다.
@@ -287,6 +293,35 @@ scripts/util/create-kubernetes-binaries-iso.sh \
 ```
 
 새 Provider의 `ownership-v1` 기능은 ISO에 포함된 component provenance와 이미지/source 검증을 통과한 경우에만 표시됩니다. Mold backend에는 public IP `allocationgeneration`과 조건부 IP 반환 기능이 필요합니다. 구버전 ISO의 장기 시험 클러스터는 재등록·업그레이드하지 않고, 새 ISO는 별도 클러스터에서 시험합니다.
+
+
+### 기본 ISO와 CSI의 차이
+
+기본 `mold-cks`는 Kubernetes bootstrap/CNI·Provider·AutoScaler·Headlamp에 필요한 payload입니다. CSI는 애플리케이션 PVC/PV용 Mold 데이터 볼륨 생성·attach·확장·snapshot/복원·Retain/Delete를 담당하며 추가 API 권한·스토리지 정책과 controller/node 드라이버를 요구합니다. 노드 VM의 ROOT를 GFS2 Primary에 배치하는 것과 별개입니다. 기본 클러스터에서 필수로 설치하지 않고 데이터 볼륨 관리가 필요한 클러스터에서 명시적으로 선택합니다.
+
+2026-10-08 기본6종 게시 시점의 공식 Release는 `mold-cks` 프로파일입니다. CSI profile은 내부 HMAC-SHA256과 GFS2 실환경 시험 결과가 있으나 공식 source/SDK 승격 및 개별 qualification·게시 단계가 남아 있습니다. CSI를 미구현 기능 또는 SHA256 감사 이전으로 설명하지 않습니다. 이름에 csi를 추가하거나 기본 ISO에 `enablecsi=true`만 전달해도 CSI payload를 사용할 수 없습니다.
+
+### CSI 설치 및 PVC 사용
+
+1. 같은 Kubernetes patch의 `mold-cks-csi` ISO를 별도 이름/URL/checksum으로 등록합니다. 공식 운영에는 공식 승격/qualification 완료 후 게시된 CSI Release를 사용합니다. 현재 recipe/Origin trial은 시험용입니다.
+2. 클러스터 생성에서 해당 CSI ISO를 선택하고 **고급 설정 → CSI 활성화**(`enablecsi=true`)를 켭니다. Europa backend는 ISO의 내부 bundle·checksum·immutable image digest/HMAC-SHA256 profile을 확인하여 CSI controller/node 및 snapshot CRD를 설치합니다. Mold가 관리하는 cloudstack-secret을 사용합니다.
+3. GFS2 Primary에 실제 매칭되는 shared/custom disk offering UUID를 StorageClass의 `csi.cloudstack.apache.org/disk-offering-id`에 설정합니다. CLVM/CLVM_NG는 사용하지 않습니다. 노드 compute offering의 ROOT 배치와 PVC 데이터 disk offering의 배치를 각각 확인합니다.
+4. 아래 StorageClass를 만들고 PVC의 `storageClassName: mold-gfs2-retain`을 지정해 앱 Pod에 mount합니다. `WaitForFirstConsumer`에서는 소비 Pod가 스케줄될 때 provisioning하므로 PVC만 생성한 Pending은 실패를 뜻하지 않습니다. Retain은 PVC 삭제 후 데이터 보존·수동 회수이고 Delete는 실제 볼륨 삭제로 연결됩니다. [StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/), [PV/PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)의 정책을 용도에 맞게 선택합니다.
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: mold-gfs2-retain
+provisioner: csi.cloudstack.apache.org
+parameters:
+  csi.cloudstack.apache.org/disk-offering-id: "<GFS2-Primary-shared-custom-disk-offering-UUID>"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+```
+
+5. `kubectl get csidrivers`, controller Deployment/node DaemonSet의 Ready, PVC Bound·Pod mount 및 실제 Mold volume의 GFS2 배치·데이터 checksum을 확인합니다. 확장/snapshot·복원/재연결/Retain·Delete는 storage runtime qualification 증거와 함께 확인합니다.
 
 CSI 프로파일의 ISO 파일 검증과 실제 스토리지 검증은 각각 수행합니다. 해당 Kubernetes minor에서 생성·attach·확장·이동·snapshot/restore·Retain/Delete·실패 후 재시도를 통과하고 이슈 증거를 기록하기 전에는 공식 Release의 CSI qualification을 PASS로 올릴 수 없습니다. StorageClass에는 대상 Mold GFS2 Primary에 연결된 disk offering을 지정해야 합니다. 1.37.1 AutoScaler의 Mold production/PASS 판정은 기본·CSI 프로파일에 동일하게 적용합니다. CSI 스토리지 qualification과 Upstream 공식 Release의 나머지 조건은 각각 검사합니다.
 

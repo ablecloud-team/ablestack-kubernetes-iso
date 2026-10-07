@@ -61,6 +61,67 @@ def verify_official_components(manifest):
  if api('repos/'+sdk_repo+'/compare/'+q['runtime_sdk_source_sha']+'...'+sdk['source_sha']).get('files'):raise ValueError('SDK runtime source equivalence failed')
 
 
+
+def registration_usage_notes(registration, manifest):
+ """Explain display naming, Europa evidence and optional storage separately."""
+ version=registration['kubernetesversion']
+ name=registration['name']
+ qualification=manifest['features'].get('runtime_qualification', {})
+ evidence=qualification.get('evidence_urls', [])
+ links='\n'.join('- '+url for url in evidence)
+ csi=manifest['features'].get('csi', False)
+ storage=('이 ISO에는 내부 HMAC-SHA256 CSI 드라이버·고정 sidecar 이미지·snapshot CRD가 포함됩니다. 설치를 요청하려면 클러스터 생성의 고급 설정에서 CSI 활성화를 선택합니다.' if csi else '이 ISO는 기본 `mold-cks` 프로파일이며 CSI 드라이버·sidecar·snapshot CRD를 포함하지 않습니다. CSI를 사용하려면 같은 Kubernetes 버전의 별도 `mold-cks-csi` ISO가 필요합니다. 이름에 csi를 넣거나 기본 ISO에서 CSI 활성화만 선택해도 CSI payload가 추가되지는 않습니다.')
+ return f"""
+## Mold 등록 이름과 입력
+
+- **권장 이름 / name:** `{name}` — 함께 게시된 `registration.json.name`과 같은 값입니다.
+- 이름은 목록에서 구분하는 표시 이름이므로 변경할 수 있습니다. Kubernetes 버전·프로파일을 이름에서 판별하지 않습니다. 실제 버전 입력은 **semanticversion=`{version}`**, 아키텍처는 **x86_64**이며 ISO 내용과 일치해야 합니다.
+- Mold UI는 이름 입력이 필수입니다. URL 등록 API에서 이름을 생략하면 `v<semanticversion>` 또는 `v<semanticversion>-<Zone 이름>`이 자동 생성되지만 운영 등록에는 권장 이름을 직접 입력합니다.
+- 등록 시 내부 ISO 이름에 `-Kubernetes-Binaries-ISO`가 붙습니다. 255자 이름 저장 한도를 고려해 입력 이름은231자 이내의 간결한 이름을 권장하며, 시스템 VM 예약 이름과 중복·혼동하는 이름은 피합니다. 권장 이름은 version/profile/arch/revision/source를 구분합니다.
+- 같은 이름으로 등록해도 payload·버전·CSI 설정이 바뀌지 않습니다. 클러스터는 선택한 지원 버전 ID/UUID를 사용합니다. URL·checksum·minimum resources는 이 릴리즈와 registration.json의 값을 함께 사용합니다.
+
+## Mold Europa 검증
+
+대상 제품/소비 브랜치는 **Mold Europa / `ablecloud-team/ablestack-cloud:ablestack-europa`**입니다. 실환경 검증은 **31번 클러스터, KVM, amd64/x86_64, GFS2 Primary**에서 수행했습니다. 버전별 신규 배포·앱/데이터·Provider LB/VPC·minor별 AutoScaler 확대/축소 및 노드 생명주기 결과는 아래 qualification 증거에 연결됩니다.
+
+- 이 ISO의 runtime qualification: **{qualification.get('status', 'pending')}** / `{qualification.get('method', '별도 판정')}`.
+- 공식 기본6종은 ISO build·독립 추출/버전·ELF·공식 바이너리 서명·매니페스트·OCI digest·격리 containerd import와 공개 전체 ISO 다운로드/SHA256을 검증했습니다.
+- 공식 SDK 신규 Provider 빌드는 race/계약 검사와 기존 실검증 구현 내용 동일성을 확인했습니다. AutoScaler는 실검증 image/binary digest를 유지했습니다. 기존 Europa 실환경 결과와 이번 공식 ISO 파일 검증을 연결하며, 이번 최종 ISO6개를 모두 새 클러스터에 다시 배포한 시험으로 확대하지 않습니다.
+
+{links}
+
+## CSI를 선택형 프로파일로 분리한 이유
+
+CSI는 애플리케이션의 **PVC/PV 데이터 볼륨을 Mold API로 생성·연결·확장하고 snapshot/복원·삭제/Retain을 처리하는 스토리지 드라이버**입니다. 노드 VM의 ROOT 디스크를 GFS2 Primary에 배치하는 기능과 별개이므로, GFS2에서 Kubernetes 노드를 실행한다는 이유만으로 CSI 설치가 필요한 것은 아닙니다. 기본 클러스터 생성·CNI·Provider·AutoScaler 기능에는 CSI가 필수가 아닙니다.
+
+CSI를 켜면 데이터 볼륨/snapshot API 권한, controller/node 드라이버·sidecar, StorageClass/disk offering과 데이터 보존/삭제 정책이 추가됩니다. 이를 명시적으로 선택하고 KVM/GFS2 데이터 생명주기를 별도로 검증하도록 프로파일을 분리했습니다. 단순 ISO 크기 절감이나 CSI 자체 미구현 때문이 아닙니다. 내부 HMAC-SHA256 CSI와 GFS2 실환경 시험은 진행했으며, **CSI의 공식 SDK/source 승격 및 프로파일별 공식 qualification/게시 조건은 기본 ISO와 별도**입니다.
+
+{storage}
+
+## CSI 사용 절차
+
+1. **같은 patch 버전의 `mold-cks-csi` ISO를 별도 이름·URL·checksum으로 등록**합니다. CSI 공식 Release가 게시되기 전의 recipe/Origin trial 산출물은 시험용입니다. 공식 운영용 CSI ISO는 공식 승격/qualification 완료 뒤 게시된 CSI Release를 선택합니다.
+2. Mold에서 새 Kubernetes 클러스터를 생성할 때 CSI ISO의 지원 버전 항목을 선택하고 **고급 설정 → CSI 활성화**(`enablecsi=true`)를 선택합니다. 검증된 Europa backend가 ISO의 내부 bundle/checksum/digest와 HMAC-SHA256 profile을 확인하고 controller/node 드라이버를 배포합니다. 실제 자격증명은 Mold가 관리하는 `kube-system/cloudstack-secret`을 사용하며 ISO/README에 넣지 않습니다.
+3. **GFS2 Primary에 매칭되는 shared/custom disk offering의 실제 UUID**를 StorageClass에 지정합니다. CLVM/CLVM_NG를 선택하지 않습니다. StorageClass 이름만 GFS2로 정해도 저장소가 선택되지는 않습니다. 노드 ROOT 배치용 compute offering과 PVC 데이터용 disk offering을 각각 확인합니다.
+4. 아래 StorageClass를 기반으로 PVC의 `storageClassName`을 지정하고 애플리케이션 Pod에 mount합니다. `WaitForFirstConsumer`는 Pod의 스케줄링을 기다리므로 PVC만 만들었을 때 Pending일 수 있습니다. 예시의 Retain은 PVC 삭제 후 데이터를 보존하며 운영자가 회수 절차를 관리합니다. Delete 정책은 실제 데이터 볼륨 삭제로 연결되므로 용도에 맞게 선택합니다.
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: mold-gfs2-retain
+provisioner: csi.cloudstack.apache.org
+parameters:
+  csi.cloudstack.apache.org/disk-offering-id: "<GFS2-Primary-shared-custom-disk-offering-UUID>"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+```
+
+5. `kubectl get csidrivers`, `kubectl -n kube-system get deployment cloudstack-csi-controller`, `kubectl -n kube-system get daemonset cloudstack-csi-node`와 PVC Bound/Pod mount를 확인합니다. 실제 Mold volume·GFS2 배치 및 데이터 쓰기/재연결/확장/snapshot 복원/Retain·Delete 결과를 함께 확인합니다. [CSI 사용 문서](https://github.com/ablecloud-team/ablestack-kubernetes-iso/blob/main/README.md#선택형-csi-iso-프로파일), [Kubernetes StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/), [PV/PVC 및 reclaim policy](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)를 참고합니다.
+"""
+
+
 def main():
  p=argparse.ArgumentParser(description=__doc__)
  p.add_argument('--directory',type=Path,required=True)
@@ -119,7 +180,7 @@ def main():
 - CSI: {'내부 SHA256 GFS2 KVM opt-in 프로파일; 고정 이미지 8개 포함, 해당 minor 런타임 시험 별도' if manifest['features'].get('csi') else '기본 프로파일에는 포함하지 않음'}.
 - 실환경 판정: `{manifest['features'].get('runtime_qualification', {}).get('status', 'pending')}` / `{manifest['features'].get('runtime_qualification', {}).get('method', '별도 검증')}`. 공식 SDK 신규 빌드와 구현 내용 동일성, 기존 GFS2 실환경 증거의 적용 범위는 manifest의 qualification/evidence_urls를 확인합니다.
 - 클러스터 생성/확장/업그레이드 및 LB/VPC 런타임 검증의 환경·artifact 적용 범위는 별도 생명주기 기록을 따릅니다.
-''')
+''' + registration_usage_notes(registration, manifest))
  files=sorted(x for x in args.directory.iterdir() if x.is_file() and x.name.startswith(name))
  sums=args.directory/'SHA256SUMS'
  def digest(path):

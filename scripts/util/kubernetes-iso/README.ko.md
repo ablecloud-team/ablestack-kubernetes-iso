@@ -73,7 +73,7 @@ Mold 등록의 checksum은 파일 SHA256의 hex에 `{SHA-256}` prefix를 붙입�
 
 root payload의 `provider.yaml`, `autoscaler.yaml`은 필수입니다. Provider는 내부 SDK의 SHA256 인증을 사용하며 AutoScaler는 자체 SHA256 client를 유지합니다. ISO의 `docker/images.list`를 확인하고 import에 `--digests --base-name <repository>`를 사용하여 실제 digest 주소가 보존되도록 합니다. 설치/확장의 내부 매니페스트를 배포하고 업그레이드는 Headlamp와 legacy Dashboard의 파일을 명시적으로 구분합니다. Secret 적용은 기존 Secret 갱신으로 APIKeyPair rotation을 지원합니다.
 
-CSI는 별도 내부 SHA256 인증 검증 전이므로 이 profile에서 제외합니다. AutoScaler 활성화는 선택이며 zero-size/autoprovisioning을 지원한다고 표시하지 않습니다. 실제 LB/VPC, 각 minor의 클러스터 생성/확장/축소/업그레이드 및 arm64, Headlamp 연결 UI(#1208)는 각 생명주기 이슈의 런타임 검증 대상입니다. ISO PASS를 전체 클러스터 생명주기 PASS로 해석하지 않습니다.
+CSI는 데이터 볼륨 관리가 필요한 클러스터에서 선택하는 `mold-cks-csi` 전용 프로파일로 분리합니다. 내부 SHA256/GFS2 실환경 시험은 진행했으며 공식 component/SDK 승격·프로파일별 qualification/게시 단계는 기본 ISO와 별도입니다. 노드 ROOT의 GFS2 Primary 배치는 CSI 설치와 별개입니다. 설치 UI·StorageClass/PVC 및 데이터 보존 정책은 [CSI 사용 절차](../../../README.md#선택형-csi-iso-프로파일)를 따릅니다. AutoScaler 활성화는 선택이며 zero-size/autoprovisioning을 지원한다고 표시하지 않습니다. 실제 LB/VPC, 각 minor의 클러스터 생성/확장/축소/업그레이드 및 arm64, Headlamp 연결 UI(#1208)는 각 생명주기 이슈의 런타임 검증 대상입니다. ISO PASS를 전체 클러스터 생명주기 PASS로 해석하지 않습니다.
 
 CNI 조합은 [Calico 3.32 요구사항](https://docs.tigera.io/calico/3.32/getting-started/kubernetes/requirements)과 [3.33 요구사항](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)의 시험 minor를 기준으로 선택합니다. 노드 커널 5.10 이상과 CNI 모듈/네트워크 준비는 클러스터 배포 전 확인해야 합니다.
 
