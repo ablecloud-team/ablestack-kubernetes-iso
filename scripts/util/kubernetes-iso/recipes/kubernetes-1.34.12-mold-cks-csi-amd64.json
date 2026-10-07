@@ -126,20 +126,20 @@
     },
     {
       "path": "manifest.yaml",
-      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/1b984c828a63725ca9caa41b959b0066c2735465/deploy/profiles/mold-gfs2-amd64/manifest.yaml",
-      "sha256": "29cb8731f7f8449793f67ab013aa810b50f2b5c5efc6fbb7457499624c1e58a4",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/f24ff0a1d3dfef949fc97c7f97058abf9035cdd3/deploy/profiles/mold-gfs2-amd64/manifest.yaml",
+      "sha256": "10f01e77c751070d0dda7be37e8bab168880337c79364adcdbbd7cedf158911c",
       "version": null
     },
     {
       "path": "snapshot-crds.yaml",
-      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/1b984c828a63725ca9caa41b959b0066c2735465/deploy/profiles/mold-gfs2-amd64/snapshot-crds.yaml",
-      "sha256": "52cadf0a145f4d57e6076f82dc8d657dbce71d07d92cc9ba9a518beeef753f8f",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/f24ff0a1d3dfef949fc97c7f97058abf9035cdd3/deploy/profiles/mold-gfs2-amd64/snapshot-crds.yaml",
+      "sha256": "d27e8aff5361dc85a4e5e09ea65194f54f4a567c2a50698a939bcf0149a4b841",
       "version": null
     },
     {
       "path": "csi-profile.json",
-      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/1b984c828a63725ca9caa41b959b0066c2735465/deploy/profiles/mold-gfs2-amd64/profile.json",
-      "sha256": "9c16000fa7775f5fe764c1358bcffacef9088aac4492187447b29ba5c1d53c91",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/f24ff0a1d3dfef949fc97c7f97058abf9035cdd3/deploy/profiles/mold-gfs2-amd64/profile.json",
+      "sha256": "3c48dd188a66cee96ce2690f7defc9d619c6c5382032ad8acf5fb5fdab20b6f9",
       "version": null
     }
   ],
@@ -335,7 +335,7 @@
     "csi": {
       "source_repository": "dhslove/ablestack-kubernetes-csi",
       "source_sha": "67ccfd98668e0979771acc7084f893d2b0b4f12b",
-      "manifest_sha": "1b984c828a63725ca9caa41b959b0066c2735465",
+      "manifest_sha": "f24ff0a1d3dfef949fc97c7f97058abf9035cdd3",
       "manifest_path": "deploy/profiles/mold-gfs2-amd64/manifest.yaml",
       "build_run": "https://github.com/dhslove/ablestack-kubernetes-csi/actions/runs/37523098210",
       "architecture": "amd64",
