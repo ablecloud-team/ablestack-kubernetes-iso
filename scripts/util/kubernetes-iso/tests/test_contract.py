@@ -1,0 +1,174 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import tempfile
+import sys
+import unittest
+
+HERE=Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(HERE))
+def module(name):
+ spec=importlib.util.spec_from_file_location(name,HERE/(name+'.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
+build=module('build');validate=module('validate')
+
+class RecipeGates(unittest.TestCase):
+ def setUp(self):self.recipe=json.loads((HERE/'recipes/kubernetes-1.34.2-amd64.json').read_text())
+ def test_supported_catalog(self):
+  for path in (HERE/'recipes').glob('*.json'):build.check_recipe(json.loads(path.read_text()))
+ def test_stale_component_manifest_is_rejected_before_download(self):
+  for component in ('provider','autoscaler'):
+   recipe=copy.deepcopy(self.recipe)
+   for file in recipe['files']:
+    if file['path']==component+'.yaml':file['url']=file['url'].replace(recipe['components'][component]['source_sha'],'0'*40)
+   with self.subTest(component=component),self.assertRaisesRegex(ValueError,'manifest source lock'):build.check_recipe(recipe)
+ def test_stale_candidate_provenance_is_rejected_before_download(self):
+  for component in ('provider','autoscaler'):
+   for suffix in ('.json','-go-modules.txt'):
+    recipe=copy.deepcopy(self.recipe)
+    for file in recipe['files']:
+     if file['path']=='provenance/'+component+suffix:file['url']=file['url'].replace(recipe['components'][component]['source_sha'][:12],'0'*12)
+    with self.subTest(component=component,suffix=suffix),self.assertRaisesRegex(ValueError,'candidate provenance source lock'):build.check_recipe(recipe)
+ def test_unverified_provider_ownership_support_is_rejected(self):
+  self.recipe['components']['provider']['features']=[]
+  with self.assertRaisesRegex(ValueError,'ownership'):build.check_recipe(self.recipe)
+ def test_basic_profile_cannot_claim_csi_support(self):
+  self.recipe['components']['csi']=dict(self.recipe['components']['provider'])
+  with self.assertRaisesRegex(ValueError,'basic profile'):build.check_recipe(self.recipe)
+ def test_csi_requires_complete_manifest_payload(self):
+  r=json.loads((HERE/'recipes/kubernetes-1.34.2-mold-cks-csi-amd64.json').read_text())
+  r['files']=[f for f in r['files'] if f['path']!='csi-profile.json']
+  with self.assertRaisesRegex(ValueError,'mandatory'):build.check_recipe(r)
+ def test_csi_rejects_unapproved_sha1_driver(self):
+  r=json.loads((HERE/'recipes/kubernetes-1.34.2-mold-cks-csi-amd64.json').read_text())
+  r['components']['csi']['api_signature']='HMAC-SHA1'
+  with self.assertRaisesRegex(ValueError,'unapproved'):build.check_recipe(r)
+ def test_cross_minor_autoscaler_is_rejected(self):
+  self.recipe['kubernetes_version']='1.35.2'
+  with self.assertRaisesRegex(ValueError,'minor'):build.check_recipe(self.recipe)
+ def test_mutable_manifest_is_rejected(self):
+  self.recipe['files'][0]['url']='https://raw.githubusercontent.com/test/test/main/file'
+  with self.assertRaisesRegex(ValueError,'mutable'):build.check_recipe(self.recipe)
+ def test_missing_provider_payload_is_rejected(self):
+  self.recipe['files']=[f for f in self.recipe['files'] if f['path']!='provider.yaml']
+  with self.assertRaisesRegex(ValueError,'mandatory'):build.check_recipe(self.recipe)
+ def test_sha1_component_is_rejected(self):
+  self.recipe['components']['autoscaler']['api_signature']='HMAC-SHA1'
+  with self.assertRaisesRegex(ValueError,'unapproved'):build.check_recipe(self.recipe)
+ def test_missing_digest_is_rejected(self):
+  self.recipe['images'][0]['reference']='example.com/controller:latest'
+  with self.assertRaisesRegex(ValueError,'digest'):build.check_recipe(self.recipe)
+ def test_payload_path_escape_is_rejected(self):
+  for name in ['../outside','/absolute','dir/../escape','a\\b']:
+   with self.assertRaises(ValueError):build.safe_path(name)
+ def test_corrupt_download_cache_fails_closed(self):
+  with tempfile.TemporaryDirectory() as temporary:
+   root=Path(temporary);file=self.recipe['files'][0]
+   (root/file['sha256']).write_bytes(b'corrupted prior download')
+   with self.assertRaisesRegex(ValueError,'cached source checksum'):build.download(file,root/'output',root)
+   self.assertFalse((root/'output').exists())
+
+class IndependentReaderGates(unittest.TestCase):
+ def test_unlisted_file_is_rejected_before_any_binary_exec(self):
+  with tempfile.TemporaryDirectory() as temporary:
+   root=Path(temporary)
+   recipe={'kubernetes_version':'1.34.2','components':{}}
+   manifest={'recipe_sha256':'expected','kubernetes_version':'1.34.2','architecture':'amd64','components':{}}
+   (root/'manifest.json').write_text(json.dumps(manifest))
+   (root/'provider.yaml').write_text('tampered')
+   (root/'SHA256SUMS').write_text(validate.hash_file(root/'manifest.json')+'  manifest.json\n')
+   with self.assertRaisesRegex(ValueError,'unlisted or missing'):validate.validate_payload(root,recipe,'expected')
+ def test_arm64_binary_cannot_be_claimed_as_amd64(self):
+  elf=bytearray(64);elf[:6]=b'\x7fELF\x02\x01';elf[18:20]=b'\xb7\x00'
+  with self.assertRaisesRegex(ValueError,'amd64 ELF'):validate.elf_amd64(elf,'arm64-controller')
+ def test_mutable_runtime_image_is_rejected(self):
+  with self.assertRaisesRegex(ValueError,'mutable'):validate.manifest_images({'image':'apache/ccm:latest','imagePullPolicy':'IfNotPresent'})
+
+class AutoScalerRbacGates(unittest.TestCase):
+ def setUp(self):
+  self.documents = [
+   {'kind':'ServiceAccount','metadata':{'name':'cluster-autoscaler','namespace':'kube-system'}},
+   {'kind':'Deployment','metadata':{'name':'cluster-autoscaler','namespace':'kube-system'},
+    'spec':{'template':{'spec':{'serviceAccountName':'cluster-autoscaler'}}}},
+   {'kind':'ClusterRole','metadata':{'name':'cluster-autoscaler'},'rules':[
+    {'apiGroups':['storage.k8s.io'],'resources':['storageclasses','csinodes','csidrivers','csistoragecapacities','volumeattachments'],
+     'verbs':['get','list','watch']},
+    {'apiGroups':['resource.k8s.io'],'resources':['resourceclaims','resourceslices','deviceclasses'],
+     'verbs':['get','list','watch']}]},
+   {'kind':'ClusterRoleBinding','roleRef':{'apiGroup':'rbac.authorization.k8s.io','kind':'ClusterRole','name':'cluster-autoscaler'},
+    'subjects':[{'kind':'ServiceAccount','name':'cluster-autoscaler','namespace':'kube-system'}]}]
+ def test_storage_informer_reads_are_accepted(self):
+  report=validate.validate_autoscaler_rbac(self.documents)
+  self.assertIn('volumeattachments',report['storage_informers'])
+ def test_missing_volumeattachment_is_rejected(self):
+  self.documents[2]['rules'][0]['resources'].remove('volumeattachments')
+  with self.assertRaisesRegex(ValueError,'volumeattachments'):validate.validate_autoscaler_rbac(self.documents)
+ def test_each_missing_read_verb_is_rejected(self):
+  for verb in ['get','list','watch']:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'][0]['verbs'].remove(verb)
+   with self.subTest(verb=verb),self.assertRaisesRegex(ValueError,'get/list/watch'):validate.validate_autoscaler_rbac(documents)
+ def test_wrong_service_account_binding_is_rejected(self):
+  self.documents[3]['subjects'][0]['namespace']='other-namespace'
+  with self.assertRaisesRegex(ValueError,'ClusterRoleBinding'):validate.validate_autoscaler_rbac(self.documents)
+ def test_volumeattachment_write_is_rejected(self):
+  self.documents[2]['rules'][0]['verbs'].append('delete')
+  with self.assertRaisesRegex(ValueError,'read-only'):validate.validate_autoscaler_rbac(self.documents)
+
+ def test_dra_informer_reads_are_accepted(self):
+  report=validate.validate_autoscaler_rbac(self.documents)
+  self.assertEqual(report['dra_informers'],['resourceclaims','resourceslices','deviceclasses'])
+ def test_each_missing_dra_resource_is_rejected(self):
+  for resource in ['resourceclaims','resourceslices','deviceclasses']:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'][1]['resources'].remove(resource)
+   with self.subTest(resource=resource),self.assertRaisesRegex(ValueError,resource):
+    validate.validate_autoscaler_rbac(documents)
+ def test_each_missing_dra_read_verb_is_rejected(self):
+  for verb in ['get','list','watch']:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'][1]['verbs'].remove(verb)
+   with self.subTest(verb=verb),self.assertRaisesRegex(ValueError,'DRA informer get/list/watch'):
+    validate.validate_autoscaler_rbac(documents)
+ def test_dra_wrong_group_or_resource_name_restriction_is_rejected(self):
+  for field,value in [('apiGroups',['wrong.group']),('resourceNames',['single-claim'])]:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'][1][field]=value
+   with self.subTest(field=field),self.assertRaisesRegex(ValueError,'DRA informer'):
+    validate.validate_autoscaler_rbac(documents)
+ def test_dra_writes_and_wildcards_are_rejected(self):
+  for extra in [
+   {'apiGroups':['resource.k8s.io'],'resources':['resourceclaims'],'verbs':['update']},
+   {'apiGroups':['resource.k8s.io'],'resources':['resourceslices'],'verbs':['delete']},
+   {'apiGroups':['resource.k8s.io'],'resources':['deviceclasses'],'verbs':['*']},
+   {'apiGroups':['*'],'resources':['resourceclaims'],'verbs':['get']},
+   {'apiGroups':['resource.k8s.io'],'resources':['*'],'verbs':['get']}]:
+   documents=copy.deepcopy(self.documents);documents[2]['rules'].append(extra)
+   with self.subTest(extra=extra),self.assertRaisesRegex(ValueError,'explicit and read-only'):
+    validate.validate_autoscaler_rbac(documents)
+
+class AutoScalerIdentityGates(unittest.TestCase):
+ def setUp(self):
+  self.component=json.loads((HERE/'recipes/kubernetes-1.34.2-amd64.json').read_text())['components']['autoscaler']
+  self.labels={'io.ablestack.mold-client-sha256':self.component['customization_files']['client.go'], 'io.ablestack.mold-worker-identity-sha256':self.component['customization_files']['mold_worker_identity.go']}
+ def test_worker_identity_label_is_accepted(self):validate.validate_autoscaler_customizations(self.component,self.labels)
+ def test_missing_or_changed_worker_identity_label_is_rejected(self):
+  for value in [None,'0'*64]:
+   with self.subTest(value=value),self.assertRaisesRegex(ValueError,'worker identity'):
+    self.labels['io.ablestack.mold-worker-identity-sha256']=value;validate.validate_autoscaler_customizations(self.component,self.labels)
+ def test_recipe_without_worker_identity_provenance_is_rejected(self):
+  r=json.loads((HERE/'recipes/kubernetes-1.34.2-amd64.json').read_text());del r['components']['autoscaler']['customization_files']['mold_worker_identity.go']
+  with self.assertRaisesRegex(ValueError,'worker identity'):build.check_recipe(r)
+
+if __name__=='__main__':unittest.main()

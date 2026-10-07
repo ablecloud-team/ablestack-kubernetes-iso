@@ -1,0 +1,377 @@
+{
+  "schema": 1,
+  "profile": "mold-cks-csi",
+  "architecture": "amd64",
+  "kubernetes_version": "1.34.12",
+  "files": [
+    {
+      "path": "cni/cni-plugins-amd64.tgz",
+      "url": "https://github.com/containernetworking/plugins/releases/download/v1.7.1/cni-plugins-linux-amd64-v1.7.1.tgz",
+      "sha256": "1a28a0506bfe5bcdc981caf1a49eeab7e72da8321f1119b7be85f22621013098",
+      "version": "1.7.1"
+    },
+    {
+      "path": "headlamp.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/headlamp/434a12263a6bd9d25f86f8bfa00d9992ac2672e3/kubernetes-headlamp.yaml",
+      "sha256": "9a893b6ce1f14660f76c5d79848e64979944125406e762f76278143cd2b863a2",
+      "version": "0.40.1"
+    },
+    {
+      "path": "k8s/kubeadm",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubeadm",
+      "sha256": "10956756af61efdaf5b860d907f7a90ef585d3a5f3677b420b1be69e740220f7",
+      "version": "1.34.12"
+    },
+    {
+      "path": "k8s/kubeadm.sig",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubeadm.sig",
+      "sha256": "cbe2f1aed2de17020f532b36600a06a5cdbd8a3547c62d5b36924bb854abb3cf",
+      "version": "1.34.12"
+    },
+    {
+      "path": "k8s/kubeadm.cert",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubeadm.cert",
+      "sha256": "5eaef3888f517bc00bfd53e9a5c0a735b875c691ae651e677bd7024a733b56f7",
+      "version": "1.34.12"
+    },
+    {
+      "path": "k8s/kubelet",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubelet",
+      "sha256": "5576511106404a82993fd1188ed93a61bdcb75baff29acd57c909d52f5a91bab",
+      "version": "1.34.12"
+    },
+    {
+      "path": "k8s/kubelet.sig",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubelet.sig",
+      "sha256": "fa6418bb5bc292e4532ee614b2cf8145cb2a36a3a39138ba9810ccb9260de9e9",
+      "version": "1.34.12"
+    },
+    {
+      "path": "k8s/kubelet.cert",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubelet.cert",
+      "sha256": "978debacfe5fa122809e75072227b0f4a2cbf368deedc2b74aac3755538668ba",
+      "version": "1.34.12"
+    },
+    {
+      "path": "k8s/kubectl",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubectl",
+      "sha256": "90b7b9058ffeb5c10710bb1c73f541eaf426fb1b4e87df435db669de9a2564a2",
+      "version": "1.34.12"
+    },
+    {
+      "path": "k8s/kubectl.sig",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubectl.sig",
+      "sha256": "150df0addce89e6b2f7be3c71ce8662e06745f2fca8d315bdc0a68d9f3369319",
+      "version": "1.34.12"
+    },
+    {
+      "path": "k8s/kubectl.cert",
+      "url": "https://dl.k8s.io/release/v1.34.12/bin/linux/amd64/kubectl.cert",
+      "sha256": "5d637b60086fbb0272e2d0cf90eda5c607b7ebf8f631956170bd753167490070",
+      "version": "1.34.12"
+    },
+    {
+      "path": "cri-tools/crictl-linux-amd64.tar.gz",
+      "url": "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.34.0/crictl-v1.34.0-linux-amd64.tar.gz",
+      "sha256": "a8ff2a3edb37a98daf3aba7c3b284fe0aa5bff24166d896ab9ef64c8913c9f51",
+      "version": "1.34.0"
+    },
+    {
+      "path": "etcd/etcd-linux-amd64.tar.gz",
+      "url": "https://github.com/etcd-io/etcd/releases/download/v3.6.5/etcd-v3.6.5-linux-amd64.tar.gz",
+      "sha256": "66bad39ed920f6fc15fd74adcb8bfd38ba9a6412f8c7852d09eb11670e88cac3",
+      "version": "3.6.5"
+    },
+    {
+      "path": "network.yaml",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/db255c554b929afd73552fd3ac81d691107a1607/manifests/calico.yaml",
+      "sha256": "a8c828a06a87c629a282ebbc424895b77f3a030251993e41ea400a743675bb02",
+      "version": "3.32.2"
+    },
+    {
+      "path": "provenance/provider.json",
+      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-95e66eaff4d1/provenance.json",
+      "sha256": "22b8f6c59e132e32fb3b72e3519e81647d4b895ff9d6113bac97bb55f0698b4e",
+      "version": null
+    },
+    {
+      "path": "provenance/provider-go-modules.txt",
+      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-95e66eaff4d1/go-modules.txt",
+      "sha256": "16cf2b301bbbe23c1449cbec8967c93c84c44b52cb3705473c049cf1e6d66ee6",
+      "version": null
+    },
+    {
+      "path": "provider.yaml",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-provider/95e66eaff4d17f0e072f019e9c82c196ec10980e/deployment.yaml",
+      "sha256": "bc396f0247845442fff82fd3c240853732fa785a4da0fca47e5718e1c71c7526",
+      "version": null
+    },
+    {
+      "path": "autoscaler.yaml",
+      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/2132862adc757e4547033e36e0502ca00f3d1762/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
+      "sha256": "95529b9b0506a818c8e90273874ed81aa70f2c860233f1ed1b0f9903a7f9dfd0",
+      "version": null
+    },
+    {
+      "path": "provenance/autoscaler.json",
+      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-2132862adc75-k8s1.34/provenance.json",
+      "sha256": "0a8e0fb61a4bca698acf7a5ec8417fd27f615243fcd44d201c5f00acd9476d40",
+      "version": null
+    },
+    {
+      "path": "provenance/autoscaler-go-modules.txt",
+      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-2132862adc75-k8s1.34/go-modules.txt",
+      "sha256": "df1168b8a295ac19fc3ae64099a1dacc83cb86c678f87571c940cdaeda09558c",
+      "version": null
+    },
+    {
+      "path": "manifest.yaml",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/f24ff0a1d3dfef949fc97c7f97058abf9035cdd3/deploy/profiles/mold-gfs2-amd64/manifest.yaml",
+      "sha256": "10f01e77c751070d0dda7be37e8bab168880337c79364adcdbbd7cedf158911c",
+      "version": null
+    },
+    {
+      "path": "snapshot-crds.yaml",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/f24ff0a1d3dfef949fc97c7f97058abf9035cdd3/deploy/profiles/mold-gfs2-amd64/snapshot-crds.yaml",
+      "sha256": "d27e8aff5361dc85a4e5e09ea65194f54f4a567c2a50698a939bcf0149a4b841",
+      "version": null
+    },
+    {
+      "path": "csi-profile.json",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-csi/f24ff0a1d3dfef949fc97c7f97058abf9035cdd3/deploy/profiles/mold-gfs2-amd64/profile.json",
+      "sha256": "3c48dd188a66cee96ce2690f7defc9d619c6c5382032ad8acf5fb5fdab20b6f9",
+      "version": null
+    }
+  ],
+  "images": [
+    {
+      "original": "registry.k8s.io/kube-apiserver:v1.34.12",
+      "resolved_from": "registry.k8s.io/kube-apiserver:v1.34.12",
+      "reference": "registry.k8s.io/kube-apiserver@sha256:f33193d45b6aef40e31d0b2afd3583c902f0c3ec632c81189c42a67a3dab0db6",
+      "import_alias": "registry.k8s.io/kube-apiserver:v1.34.12"
+    },
+    {
+      "original": "registry.k8s.io/kube-controller-manager:v1.34.12",
+      "resolved_from": "registry.k8s.io/kube-controller-manager:v1.34.12",
+      "reference": "registry.k8s.io/kube-controller-manager@sha256:5aacda3dc4d4c1f5c9079844aa63e366baee75de4c6bbdca2fabe5ea758ad691",
+      "import_alias": "registry.k8s.io/kube-controller-manager:v1.34.12"
+    },
+    {
+      "original": "registry.k8s.io/kube-scheduler:v1.34.12",
+      "resolved_from": "registry.k8s.io/kube-scheduler:v1.34.12",
+      "reference": "registry.k8s.io/kube-scheduler@sha256:a6664202193b0bd4b4441c43f272bbad5579731c32c43eb7e8d6352edd67faaf",
+      "import_alias": "registry.k8s.io/kube-scheduler:v1.34.12"
+    },
+    {
+      "original": "registry.k8s.io/kube-proxy:v1.34.12",
+      "resolved_from": "registry.k8s.io/kube-proxy:v1.34.12",
+      "reference": "registry.k8s.io/kube-proxy@sha256:4a09df40da7222d7f3211eaabd08345764766965abd8f264f1925cc20b76fc38",
+      "import_alias": "registry.k8s.io/kube-proxy:v1.34.12"
+    },
+    {
+      "original": "registry.k8s.io/coredns/coredns:v1.12.1",
+      "resolved_from": "registry.k8s.io/coredns/coredns:v1.12.1",
+      "reference": "registry.k8s.io/coredns/coredns@sha256:4f7a57135719628cf2070c5e3cbde64b013e90d4c560c5ecbf14004181f91998",
+      "import_alias": "registry.k8s.io/coredns/coredns:v1.12.1"
+    },
+    {
+      "original": "registry.k8s.io/pause:3.10.1",
+      "resolved_from": "registry.k8s.io/pause:3.10.1",
+      "reference": "registry.k8s.io/pause@sha256:e5b941ef8f71de54dc3a13398226c269ba217d06650a21bd3afcf9d890cf1f41",
+      "import_alias": "registry.k8s.io/pause:3.10.1"
+    },
+    {
+      "original": "registry.k8s.io/etcd:3.6.5-0",
+      "resolved_from": "registry.k8s.io/etcd:3.6.5-0",
+      "reference": "registry.k8s.io/etcd@sha256:28cf8781a30d69c2e3a969764548497a949a363840e1de34e014608162644778",
+      "import_alias": "registry.k8s.io/etcd:3.6.5-0"
+    },
+    {
+      "original": "ghcr.io/headlamp-k8s/headlamp:latest",
+      "resolved_from": "ghcr.io/headlamp-k8s/headlamp:v0.40.1",
+      "reference": "ghcr.io/headlamp-k8s/headlamp@sha256:41004fa1df8dd591ce8dbe955ba5b52558ddaee92cf6225129bc2b96413b9561",
+      "import_alias": "ghcr.io/headlamp-k8s/headlamp:v0.40.1"
+    },
+    {
+      "original": "quay.io/calico/cni:v3.32.2",
+      "resolved_from": "quay.io/calico/cni:v3.32.2",
+      "reference": "quay.io/calico/cni@sha256:8de23af2a36514e5027cf3f8577be61c577ae21664d19bd726bb9ccedb9e0d5a",
+      "import_alias": "quay.io/calico/cni:v3.32.2"
+    },
+    {
+      "original": "quay.io/calico/kube-controllers:v3.32.2",
+      "resolved_from": "quay.io/calico/kube-controllers:v3.32.2",
+      "reference": "quay.io/calico/kube-controllers@sha256:f241490840083743e747389af8d5067c961370bd5e2e2af6538db2f7e183f60b",
+      "import_alias": "quay.io/calico/kube-controllers:v3.32.2"
+    },
+    {
+      "original": "quay.io/calico/node:v3.32.2",
+      "resolved_from": "quay.io/calico/node:v3.32.2",
+      "reference": "quay.io/calico/node@sha256:d7a9b58573b165caa8128d2735a19b788434547064b2b4af2abf68cea24f7ec3",
+      "import_alias": "quay.io/calico/node:v3.32.2"
+    },
+    {
+      "original": "ghcr.io/ablecloud-team/ablestack-kubernetes-provider:1.2.1-mold.1",
+      "resolved_from": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-95e66eaff4d17f0e072f019e9c82c196ec10980e",
+      "reference": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:cc9715de4bc26059666ab1757b6a4217493a6ae42fb2dbde378f72c9c4c1f9d3",
+      "import_alias": "ghcr.io/dhslove/ablestack-kubernetes-provider:sha-95e66eaff4d17f0e072f019e9c82c196ec10980e"
+    },
+    {
+      "original": "ghcr.io/ablecloud-team/autoscaler:1.34.5-mold.1",
+      "resolved_from": "ghcr.io/dhslove/autoscaler:sha-2132862adc757e4547033e36e0502ca00f3d1762-k8s1.34",
+      "reference": "ghcr.io/dhslove/autoscaler@sha256:83e1337f0c0f1bb0fdf6fab91fcacbb98c98ebc1b5667eb8a72c1cd0b73b8e87",
+      "import_alias": "ghcr.io/dhslove/autoscaler:sha-2132862adc757e4547033e36e0502ca00f3d1762-k8s1.34"
+    },
+    {
+      "original": "ghcr.io/cloudstack/cloudstack-csi-driver:main",
+      "resolved_from": "ghcr.io/dhslove/ablestack-kubernetes-csi@sha256:e1ef5f7df4dbd155d0e57f6faa0b727b23a79482fa7dac0f5bbfff69932d0afb",
+      "reference": "ghcr.io/dhslove/ablestack-kubernetes-csi@sha256:e1ef5f7df4dbd155d0e57f6faa0b727b23a79482fa7dac0f5bbfff69932d0afb",
+      "import_alias": "ghcr.io/dhslove/ablestack-kubernetes-csi"
+    },
+    {
+      "original": "registry.k8s.io/sig-storage/csi-provisioner:v5.0.1",
+      "resolved_from": "registry.k8s.io/sig-storage/csi-provisioner@sha256:94add3feccf10c5191059f338e51d3a1f3ef5012e4e37ea8bd28c1a8d3d393eb",
+      "reference": "registry.k8s.io/sig-storage/csi-provisioner@sha256:94add3feccf10c5191059f338e51d3a1f3ef5012e4e37ea8bd28c1a8d3d393eb",
+      "import_alias": "registry.k8s.io/sig-storage/csi-provisioner"
+    },
+    {
+      "original": "registry.k8s.io/sig-storage/csi-attacher:v4.6.1",
+      "resolved_from": "registry.k8s.io/sig-storage/csi-attacher@sha256:a70202a7cb71dd692c4299514951ead0485345bf64d9381a09f06490d39ebf43",
+      "reference": "registry.k8s.io/sig-storage/csi-attacher@sha256:a70202a7cb71dd692c4299514951ead0485345bf64d9381a09f06490d39ebf43",
+      "import_alias": "registry.k8s.io/sig-storage/csi-attacher"
+    },
+    {
+      "original": "registry.k8s.io/sig-storage/csi-resizer:v1.11.1",
+      "resolved_from": "registry.k8s.io/sig-storage/csi-resizer@sha256:d435d5bb8637f4c0229c5eb5ce515f0718ee5dc55a49128a163f40b2a497af73",
+      "reference": "registry.k8s.io/sig-storage/csi-resizer@sha256:d435d5bb8637f4c0229c5eb5ce515f0718ee5dc55a49128a163f40b2a497af73",
+      "import_alias": "registry.k8s.io/sig-storage/csi-resizer"
+    },
+    {
+      "original": "registry.k8s.io/sig-storage/csi-snapshotter:v6.3.0",
+      "resolved_from": "registry.k8s.io/sig-storage/csi-snapshotter@sha256:50fad70a18f85ce6994ede08c383414252249f9c65a7dfc572f1eeb0c053303e",
+      "reference": "registry.k8s.io/sig-storage/csi-snapshotter@sha256:50fad70a18f85ce6994ede08c383414252249f9c65a7dfc572f1eeb0c053303e",
+      "import_alias": "registry.k8s.io/sig-storage/csi-snapshotter"
+    },
+    {
+      "original": "registry.k8s.io/sig-storage/snapshot-controller:v6.3.0",
+      "resolved_from": "registry.k8s.io/sig-storage/snapshot-controller@sha256:02b3cb265fb3aa1568a3d727d409a3d0b2f84224f6b42660bc75a0928c08538e",
+      "reference": "registry.k8s.io/sig-storage/snapshot-controller@sha256:02b3cb265fb3aa1568a3d727d409a3d0b2f84224f6b42660bc75a0928c08538e",
+      "import_alias": "registry.k8s.io/sig-storage/snapshot-controller"
+    },
+    {
+      "original": "registry.k8s.io/sig-storage/livenessprobe:v2.12.0",
+      "resolved_from": "registry.k8s.io/sig-storage/livenessprobe@sha256:9fd908d3729d6653017614c77ca29d18f5a607ba568fd4974f8daae81a965cfa",
+      "reference": "registry.k8s.io/sig-storage/livenessprobe@sha256:9fd908d3729d6653017614c77ca29d18f5a607ba568fd4974f8daae81a965cfa",
+      "import_alias": "registry.k8s.io/sig-storage/livenessprobe"
+    },
+    {
+      "original": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1",
+      "resolved_from": "registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:bf2dc90ad453963c1006d10c36eb4fd3f4e2811d8e9df003c80c4fa4b69663db",
+      "reference": "registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:bf2dc90ad453963c1006d10c36eb4fd3f4e2811d8e9df003c80c4fa4b69663db",
+      "import_alias": "registry.k8s.io/sig-storage/csi-node-driver-registrar"
+    }
+  ],
+  "core_images": [
+    "registry.k8s.io/kube-apiserver:v1.34.12",
+    "registry.k8s.io/kube-controller-manager:v1.34.12",
+    "registry.k8s.io/kube-scheduler:v1.34.12",
+    "registry.k8s.io/kube-proxy:v1.34.12",
+    "registry.k8s.io/coredns/coredns:v1.12.1",
+    "registry.k8s.io/pause:3.10.1",
+    "registry.k8s.io/etcd:3.6.5-0"
+  ],
+  "components": {
+    "provider": {
+      "source_repository": "dhslove/ablestack-kubernetes-provider",
+      "source_sha": "95e66eaff4d17f0e072f019e9c82c196ec10980e",
+      "build_run": "https://github.com/dhslove/ablestack-kubernetes-provider/actions/runs/37554399662",
+      "original_baseline": "Apache Provider main 2a46b8e43382bbd1564db7a9bfa56f9caa872d13",
+      "architecture": "amd64",
+      "api_signature": "HMAC-SHA256",
+      "image": "ghcr.io/dhslove/ablestack-kubernetes-provider@sha256:cc9715de4bc26059666ab1757b6a4217493a6ae42fb2dbde378f72c9c4c1f9d3",
+      "binary": "cloudstack-ccm",
+      "manifest_sha": "95e66eaff4d17f0e072f019e9c82c196ec10980e",
+      "manifest_path": "deployment.yaml",
+      "sdk": {
+        "module": "github.com/ablecloud-team/ablestack-mold-go/v2",
+        "candidate_module": "github.com/dhslove/ablestack-mold-go/v2",
+        "version": "v2.19.2-mold-test.3",
+        "source_sha": "25574a288d86e638c058721c919bb43e33c4485f",
+        "original_baseline": "v2.19.1"
+      },
+      "features": [
+        "ownership-v1"
+      ]
+    },
+    "autoscaler": {
+      "source_repository": "dhslove/autoscaler",
+      "source_sha": "2132862adc757e4547033e36e0502ca00f3d1762",
+      "build_run": "https://github.com/dhslove/autoscaler/actions/runs/37557568306",
+      "original_baseline": "cluster-autoscaler-1.34.5",
+      "binary_source_sha": "cb2123ed13148c38fbdb1ede42d8e99761ee2909",
+      "baseline_status": "stable",
+      "kubernetes_minor": "1.34",
+      "architecture": "amd64",
+      "api_signature": "HMAC-SHA256",
+      "customization_files": {
+        "client.go": "538b4149dfe18dd0e7ab0af0b22ee0da907c43ab8e759a7287475b85f571495a",
+        "mold_signing_test.go": "9415df730560eb25906a1e005ced77874264b6e3a5007381421df8bd1b5f2036",
+        "testdata/mold-signing.json": "622bd67d3ded3acc3151586d8c960b3f406a95515c23984c6ff03a9df99f97aa",
+        "cks.go": "747b9521acc863a97894a35d6fc0a56dd02b1b4ca4f0c9aa91f75615f9ddcc1e",
+        "mold_worker_identity.go": "eadc73316051cd70c921dbacdc917e5826ccf356c826c8e237ccff8e24be3d34",
+        "mold_worker_identity_test.go": "3387f00d9aedb01758943bb67a1e6e8965e849c60cd983b46427c9329c2e47c8",
+        "mold/apply-worker-identity.py": "0907ebb89e222f093d43f2fdb2a8d979386e5ab38354ff4367b21ef946728901",
+        "mold/worker-identity-provider-test.go.tmpl": "c8b43e2acfdeb735c336b002365bed3d03768e4c516188e3314ed64de6983097",
+        "mold/apply-cloud-config.py": "7f1bd133832437ada84e6126fff010e0ef9fe2a8d0dab7397e4d59f617e9cdc3",
+        "cluster-autoscaler/cloudprovider/cloudstack/cloudstack_option.go": "04696e2a7dd9671cdb57af1cae627084712cc85b027417c5f90ed6ff72590829",
+        "cluster-autoscaler/cloudprovider/cloudstack/mold_project_config_test.go": "5eccf940300820183045165d5381d5a25d5aa46cbfabb6a2f787ed955c3710d4",
+        "cluster-autoscaler/cloudprovider/cloudstack/service/mold_project_scope_test.go": "9f0dfc2a74e3956af6b2efbd591e43781c72f9e55e18898d93ab5abc5355cce7"
+      },
+      "image": "ghcr.io/dhslove/autoscaler@sha256:83e1337f0c0f1bb0fdf6fab91fcacbb98c98ebc1b5667eb8a72c1cd0b73b8e87",
+      "binary": "cluster-autoscaler",
+      "manifest_sha": "2132862adc757e4547033e36e0502ca00f3d1762",
+      "manifest_path": "cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml"
+    },
+    "csi": {
+      "source_repository": "dhslove/ablestack-kubernetes-csi",
+      "source_sha": "67ccfd98668e0979771acc7084f893d2b0b4f12b",
+      "manifest_sha": "f24ff0a1d3dfef949fc97c7f97058abf9035cdd3",
+      "manifest_path": "deploy/profiles/mold-gfs2-amd64/manifest.yaml",
+      "build_run": "https://github.com/dhslove/ablestack-kubernetes-csi/actions/runs/37523098210",
+      "architecture": "amd64",
+      "api_signature": "HMAC-SHA256",
+      "image": "ghcr.io/dhslove/ablestack-kubernetes-csi@sha256:e1ef5f7df4dbd155d0e57f6faa0b727b23a79482fa7dac0f5bbfff69932d0afb",
+      "binary": "cloudstack-csi-driver",
+      "binary_source_provenance": "go-linker-buildinfo",
+      "sdk": {
+        "module": "github.com/ablecloud-team/ablestack-mold-go/v2",
+        "candidate_module": "github.com/dhslove/ablestack-mold-go/v2",
+        "version": "v2.19.2-mold-test.3",
+        "source_sha": "25574a288d86e638c058721c919bb43e33c4485f"
+      }
+    }
+  },
+  "features": {
+    "csi": true,
+    "csi_reason": "Opt-in Mold SHA256 CSI profile with immutable GFS2 KVM driver and eight pinned images",
+    "network": "calico-3.32.2",
+    "dashboard": "headlamp-0.40.1",
+    "architectures": [
+      "amd64"
+    ],
+    "autoscaler": "payload mandatory; activation optional; Kubernetes 1.34; stable",
+    "runtime_validation": "cluster lifecycle and CNI runtime compatibility are separate gates",
+    "node_kernel_minimum": "5.10; verify target node template before cluster deployment",
+    "runtime_qualification": {
+      "status": "pending",
+      "scope": "Provider LoadBalancer and minor-matched AutoScaler/node lifecycle runtime gates",
+      "evidence_urls": []
+    },
+    "provider_ownership_v1": true,
+    "csi_qualification": {
+      "status": "pending",
+      "scope": "dynamic provisioning, attach, expand, reschedule, snapshot/restore, Retain, Delete, cleanup retry for this minor",
+      "evidence_urls": []
+    }
+  }
+}
