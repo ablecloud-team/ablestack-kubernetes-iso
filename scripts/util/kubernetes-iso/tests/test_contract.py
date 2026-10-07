@@ -29,6 +29,19 @@ class RecipeGates(unittest.TestCase):
  def setUp(self):self.recipe=json.loads((HERE/'recipes/kubernetes-1.34.2-amd64.json').read_text())
  def test_supported_catalog(self):
   for path in (HERE/'recipes').glob('*.json'):build.check_recipe(json.loads(path.read_text()))
+ def test_stale_component_manifest_is_rejected_before_download(self):
+  for component in ('provider','autoscaler'):
+   recipe=copy.deepcopy(self.recipe)
+   for file in recipe['files']:
+    if file['path']==component+'.yaml':file['url']=file['url'].replace(recipe['components'][component]['source_sha'],'0'*40)
+   with self.subTest(component=component),self.assertRaisesRegex(ValueError,'manifest source lock'):build.check_recipe(recipe)
+ def test_stale_candidate_provenance_is_rejected_before_download(self):
+  for component in ('provider','autoscaler'):
+   for suffix in ('.json','-go-modules.txt'):
+    recipe=copy.deepcopy(self.recipe)
+    for file in recipe['files']:
+     if file['path']=='provenance/'+component+suffix:file['url']=file['url'].replace(recipe['components'][component]['source_sha'][:12],'0'*12)
+    with self.subTest(component=component,suffix=suffix),self.assertRaisesRegex(ValueError,'candidate provenance source lock'):build.check_recipe(recipe)
  def test_unverified_provider_ownership_support_is_rejected(self):
   self.recipe['components']['provider']['features']=[]
   with self.assertRaisesRegex(ValueError,'ownership'):build.check_recipe(self.recipe)

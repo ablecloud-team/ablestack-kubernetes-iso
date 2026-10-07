@@ -90,37 +90,37 @@
     },
     {
       "path": "provenance/provider.json",
-      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-772149d6bb25/provenance.json",
-      "sha256": "46168d9783904127166eea8ba2a78e5b4b262423702310a7b0f3c1e6df276396",
+      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-95e66eaff4d1/provenance.json",
+      "sha256": "22b8f6c59e132e32fb3b72e3519e81647d4b895ff9d6113bac97bb55f0698b4e",
       "version": null
     },
     {
       "path": "provenance/provider-go-modules.txt",
-      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-772149d6bb25/go-modules.txt",
-      "sha256": "9629e98afe720dd9c7c7cfe6605fba4c0fc34a477fd98e4542c8a6288ccc90be",
+      "url": "https://github.com/dhslove/ablestack-kubernetes-provider/releases/download/mold-test-95e66eaff4d1/go-modules.txt",
+      "sha256": "16cf2b301bbbe23c1449cbec8967c93c84c44b52cb3705473c049cf1e6d66ee6",
       "version": null
     },
     {
       "path": "provider.yaml",
-      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-provider/772149d6bb25b52b08c85f35238ead7d6beb3f8b/deployment.yaml",
-      "sha256": "9bd7bb792e02cd3313ddba90346db9855ba45dc22255d3d63335dcb366a1f5a4",
+      "url": "https://raw.githubusercontent.com/dhslove/ablestack-kubernetes-provider/95e66eaff4d17f0e072f019e9c82c196ec10980e/deployment.yaml",
+      "sha256": "bc396f0247845442fff82fd3c240853732fa785a4da0fca47e5718e1c71c7526",
       "version": null
     },
     {
       "path": "autoscaler.yaml",
-      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/a25cc00df8d74950aabca0799c084b77219bcb40/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
+      "url": "https://raw.githubusercontent.com/dhslove/autoscaler/2132862adc757e4547033e36e0502ca00f3d1762/cluster-autoscaler/cloudprovider/cloudstack/examples/cluster-autoscaler-standard.yaml",
       "sha256": "95529b9b0506a818c8e90273874ed81aa70f2c860233f1ed1b0f9903a7f9dfd0",
       "version": null
     },
     {
       "path": "provenance/autoscaler.json",
-      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-a25cc00df8d7-k8s1.34/provenance.json",
-      "sha256": "dfaa33eb46cfc58b48621ea3024eba6523be947c4db7ad7f779471a22a91cb17",
+      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-2132862adc75-k8s1.34/provenance.json",
+      "sha256": "0a8e0fb61a4bca698acf7a5ec8417fd27f615243fcd44d201c5f00acd9476d40",
       "version": null
     },
     {
       "path": "provenance/autoscaler-go-modules.txt",
-      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-a25cc00df8d7-k8s1.34/go-modules.txt",
+      "url": "https://github.com/dhslove/autoscaler/releases/download/mold-test-2132862adc75-k8s1.34/go-modules.txt",
       "sha256": "df1168b8a295ac19fc3ae64099a1dacc83cb86c678f87571c940cdaeda09558c",
       "version": null
     }

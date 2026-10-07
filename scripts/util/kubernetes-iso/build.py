@@ -97,6 +97,27 @@ def check_recipe(recipe):
         c = recipe['components'][component]
         if c['api_signature'] != 'HMAC-SHA256' or c['image'] not in refs or not re.fullmatch('[a-f0-9]{40}', c['source_sha']):
             raise ValueError('unapproved Mold component or missing provenance')
+    files_by_path = {f['path']: f for f in recipe['files']}
+    for name in ('provider', 'autoscaler'):
+        component = recipe['components'][name]
+        manifest = files_by_path[name + '.yaml']
+        expected_manifest = 'https://raw.githubusercontent.com/' + component['source_repository'] + '/' + component['manifest_sha'] + '/' + component['manifest_path']
+        if component['manifest_sha'] != component['source_sha'] or manifest['url'] != expected_manifest:
+            raise ValueError('component manifest source lock mismatch: ' + name)
+        for suffix in ('.json', '-go-modules.txt'):
+            source = files_by_path.get('provenance/' + name + suffix)
+            if not source:
+                raise ValueError('component provenance payload missing: ' + name)
+            tag = urllib.parse.urlparse(source['url']).path.split('/releases/download/')
+            if len(tag) != 2:
+                raise ValueError('component provenance must use an immutable release asset: ' + name)
+            release_tag = tag[1].split('/')[0]
+            if release_tag.startswith('mold-test-'):
+                expected_tag = 'mold-test-' + component['source_sha'][:12]
+                if name == 'autoscaler':
+                    expected_tag += '-k8s' + component['kubernetes_minor']
+                if release_tag != expected_tag:
+                    raise ValueError('component candidate provenance source lock mismatch: ' + name)
     if recipe['features'].get('provider_ownership_v1') and 'ownership-v1' not in recipe['components']['provider'].get('features', []):
         raise ValueError('Provider ownership marker requires verified component support')
     minor='.'.join(recipe['kubernetes_version'].split('.')[:2])
